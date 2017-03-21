@@ -1,0 +1,30 @@
+spring.application.name: dead-code-detector
+spring.boot.admin.client.enabled: false
+server.error.whitelabel.enabled: false
+
+endpoints:
+  health:
+    sensitive: false
+  restart:
+    enabled: false
+  shutdown:
+    enabled: false
+
+---
+
+spring:
+    profiles: dev
+
+url: http://some_url
+
+---
+spring:
+    profiles: stage
+
+url: http://some_url
+---
+
+spring:
+    profiles: prod
+
+url: http://some_url

@@ -1,0 +1,62 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath('org.springframework.boot:spring-boot-gradle-plugin:1.4.0.RELEASE')
+        classpath('se.transmode.gradle:gradle-docker:1.2')
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+apply plugin: 'docker'
+
+jar {
+    baseName = 'dead-code-detector'
+}
+
+task buildDocker(type: Docker, dependsOn: build) {
+  push = true
+  applicationName = jar.baseName
+  dockerfile = file('Dockerfile')
+  doFirst {
+    copy {
+      from jar
+      into stageDir
+    }
+  }
+}
+
+repositories {
+    mavenCentral()
+}
+
+bootRun {
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web:1.4.1.RELEASE")
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+    compile 'com.google.code.gson:gson:2.4'
+    compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
+    compile group: 'org.json', name: 'json', version: '20160212'
+    compile 'io.springfox:springfox-swagger2:+'
+    compile 'io.springfox:springfox-swagger-ui:2.1.2'
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+    compile 'net.logstash.logback:logstash-logback-encoder:4.4'
+    compile 'org.codehaus.groovy:groovy-all:2.4.4'
+    compile "org.projectlombok:lombok:1.16.2"
+    //test
+    compile group: 'org.springframework', name: 'spring-test', version: '4.3.2.RELEASE'
+    compile 'org.unitils:unitils-core:3.4.2'
+    compile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}

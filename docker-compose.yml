@@ -1,0 +1,10 @@
+dead-code-detector-dev:
+  build: .
+  volumes:
+    - .:/dead-code-detector
+  ports:
+    - "8080:8080"
+  environment:
+    SPRING_PROFILES_ACTIVE: production
+  volumes:
+    - "./models:/models"
