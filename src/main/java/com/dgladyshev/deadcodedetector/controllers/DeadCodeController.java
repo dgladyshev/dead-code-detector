@@ -25,7 +25,7 @@ public class DeadCodeController {
 	ResponseEntity<Check> addCheck(@RequestBody CheckRequest checkRequest) {
 		log.info("Incoming request: " + checkRequest);
 		//TODO check that request is valid
-		Check check = checkCodeService.createCheck(checkRequest.getUrl(), checkRequest.getLanguage());
+		Check check = checkCodeService.createCheck(checkRequest.getUrl(), checkRequest.getName(), checkRequest.getLanguage());
 		checkCodeService.checkCode(check.getCheckId());
 		return new ResponseEntity<>(check, HttpStatus.OK);
 	}
@@ -49,6 +49,8 @@ public class DeadCodeController {
 				HttpStatus.OK
 		);
 	}
+
+	//TODO add ability to delete checks
 
 }
 

@@ -51,6 +51,8 @@ dependencies {
     compile 'net.logstash.logback:logstash-logback-encoder:4.4'
     compile 'org.codehaus.groovy:groovy-all:2.4.4'
     compile "org.projectlombok:lombok:1.16.2"
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.6.1.201703071140-r'
+    compile group: 'org.buildobjects', name: 'jproc', version: '2.2.1'
     //test
     compile group: 'org.springframework', name: 'spring-test', version: '4.3.2.RELEASE'
     compile 'org.unitils:unitils-core:3.4.2'

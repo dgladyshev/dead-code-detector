@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Data
 @Builder
@@ -11,12 +13,12 @@ public class Check {
 
 	private String checkId;
 	private String repoUrl;
+	private String repoName;
 	private String repoLanguage;
 	private CheckStatus checkStatus;
-	private String pathToGraph; //TODO rename
 	private Long timeAdded;
 	private Long timeCheckFinished;
-	private Object checkResult; //TODO understand what to use here
+	private List<DeadCodeOccurence> deadCodeOccurences;
 
 }
 

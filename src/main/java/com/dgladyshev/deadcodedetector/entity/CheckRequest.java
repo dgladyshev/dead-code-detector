@@ -6,6 +6,7 @@ import lombok.Data;
 public class CheckRequest {
 
 	private String url;
+	private String name;
 	private String language;
 
 }
