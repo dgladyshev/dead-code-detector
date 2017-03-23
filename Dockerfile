@@ -9,10 +9,6 @@ RUN apt-get update && \
     apt-get install -y oracle-java8-installer && \
     apt-get clean
 
-RUN mkdir -p /scitools \
-    && wget http://builds.scitools.com/all_builds/b844/Understand/Understand-4.0.844-Linux-64bit.tgz \
-    | tar zxvf /scitools
-
 ADD . /dead-code-detector
 
 WORKDIR /dead-code-detector

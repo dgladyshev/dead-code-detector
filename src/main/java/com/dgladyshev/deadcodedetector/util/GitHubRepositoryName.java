@@ -3,7 +3,6 @@ package com.dgladyshev.deadcodedetector.util;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRepositoryURL;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.CheckForNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,9 +37,8 @@ public class GitHubRepositoryName {
 	 * Create {@link GitHubRepositoryName} from URL
 	 *
 	 * @param url repo url. Can be null
-	 * @return parsed {@link GitHubRepositoryName} or null if it cannot be parsed from the specified URL
+	 * @return parsed {@link GitHubRepositoryName} or throws exception if it cannot be parsed from the specified URL
 	 */
-	@CheckForNull
 	public static GitHubRepositoryName create(String url) {
 		log.debug("Constructing from URL {}", url);
 		for (Pattern p : URL_PATTERNS) {
