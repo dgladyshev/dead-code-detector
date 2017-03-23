@@ -2,9 +2,6 @@ spring.application.name: dead-code-detector
 spring.boot.admin.client.enabled: false
 server.error.whitelabel.enabled: false
 
-data.dir: ./data
-scitools.dir: /Users/dgladyshev/scitools/bin/macosx #TODO fix
-
 endpoints:
   health:
     sensitive: false
@@ -15,18 +12,26 @@ endpoints:
 
 ---
 spring:
+    profiles: local
+
+data.dir: ./data
+scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set to you local scitools path
+
+---
+spring:
     profiles: dev
 
-url: http://some_url
+data.dir: ./data
+scitools.dir: /scitools
 
 ---
 spring:
     profiles: stage
 
-url: http://some_url
+url: http://some_url #TODO
 ---
 
 spring:
     profiles: prod
 
-url: http://some_url
+url: http://some_url #TODO

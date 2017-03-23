@@ -43,14 +43,16 @@ public class DeadCodeController {
 	@RequestMapping(value = "/checks/{id}", method = RequestMethod.GET)
 	public
 	@ResponseBody
-	ResponseEntity<Check> getCheckById(@PathVariable String id) {
-		return new ResponseEntity<>(
-				checkCodeService.getCheckById(id),
-				HttpStatus.OK
-		);
+	Check getCheckById(@PathVariable String id) {
+		return checkCodeService.getCheck(id);
 	}
 
-	//TODO add ability to delete checks
+	@RequestMapping(value = "/checks/{id}", method = RequestMethod.DELETE)
+	public
+	@ResponseBody
+	void deleteCheckById(@PathVariable String id) {
+		checkCodeService.deleteCheck(id);
+	}
 
 }
 

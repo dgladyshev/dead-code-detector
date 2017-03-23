@@ -16,6 +16,7 @@ public class Check {
 	private String repoName;
 	private String repoLanguage;
 	private CheckStatus checkStatus;
+	private String stepDescription;
 	private Long timeAdded;
 	private Long timeCheckFinished;
 	private List<DeadCodeOccurence> deadCodeOccurences;

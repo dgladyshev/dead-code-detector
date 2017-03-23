@@ -4,12 +4,12 @@ import com.dgladyshev.deadcodedetector.entity.Check;
 import com.dgladyshev.deadcodedetector.entity.CheckStatus;
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurence;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchCheckException;
-import com.dgladyshev.deadcodedetector.util.CommandUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.buildobjects.process.ProcBuilder;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -28,8 +28,6 @@ import java.util.stream.Stream;
 @Service
 public class CheckCodeService {
 
-	private static final String BASE_BRANCH = "master";
-
 	@Value("${scitools.dir}")
 	private String scitoolsDir;
 
@@ -46,40 +44,33 @@ public class CheckCodeService {
 		String checkPath = dataDir + "/" + checkId;
 		String repoPath = checkPath + "/" + check.getRepoName();
 		try {
-			Git git = Git.cloneRepository()
-					.setURI(check.getRepoUrl())
-					.setDirectory(new File(repoPath))
-					.setBranch(BASE_BRANCH)
-					.setBranchesToClone(Lists.newArrayList(BASE_BRANCH))
-					.call();
-			git.getRepository().close();
-			File dirToDelete = new File(repoPath + "/.git");
-			FileUtils.deleteDirectory(dirToDelete);
+			check.setCheckStatus(CheckStatus.PROCESSING);
+			check.setStepDescription("Step 1/5. Downloading git repository.");
+			cloneGitRepo(check, repoPath);
+			check.setStepDescription("Step 2/5. Request to analyze repository has been added to a queue.");
 		} catch (Exception e) {
+			log.error("Error occured for check id: {}. Error cased by: {}, details: {}", checkId, e.getCause(), e.getMessage());
 			check.setCheckStatus(CheckStatus.FAILED);
 		}
 		executor.submit(() -> {
-			check.setCheckStatus(CheckStatus.PROCESSING);
 			try {
-				createUDB(checkPath, repoPath, check.getRepoLanguage());
-			} catch (Exception e) {
-				log.error("Error occured for check id {}. Error is {}", checkId, e.getCause());
-				check.setCheckStatus(CheckStatus.FAILED);
-			}
-			try {
-				List<DeadCodeOccurence> deadCodeOccurences = analyzeUDB(checkPath);
+				check.setStepDescription("Step 3/5. Analyzing git repository and creating .udb file.");
+				analyzeRepo(checkPath, repoPath, check.getRepoLanguage());
+				check.setStepDescription("Step 4/5. Searching for dead code occurrences.");
+				List<DeadCodeOccurence> deadCodeOccurences = findDeadCodeOccurences(checkPath);
 				check.setDeadCodeOccurences(deadCodeOccurences);
 				check.setTimeCheckFinished(System.currentTimeMillis());
+				check.setStepDescription("Step 5/5. Processing completed.");
 				check.setCheckStatus(CheckStatus.COMPLETED);
 			} catch (Exception e) {
-				log.error("Error occured for check id {}. Error is {}", checkId, e.getCause());
+				log.error("Error occurred for check id: {}. Error cased by: {}, details: {}", checkId, e.getCause(), e.getMessage());
 				check.setCheckStatus(CheckStatus.FAILED);
 			}
 		});
 	}
 
 	public Check createCheck(String url, String name, String language) {
-		String checkId = java.util.UUID.randomUUID().toString(); //TODO generate unique id
+		String checkId = java.util.UUID.randomUUID().toString();
 		checks.put(
 				checkId,
 				Check.builder()
@@ -98,44 +89,58 @@ public class CheckCodeService {
 		return checks;
 	}
 
-	public Check getCheckById(String id) throws NoSuchCheckException {
-		if (checks.containsKey(id)) {
+	public Check getCheck(String id) throws NoSuchCheckException {
+		if (id != null && checks.containsKey(id)) {
 			return checks.get(id);
 		} else {
 			throw new NoSuchCheckException();
 		}
 	}
 
+	public void deleteCheck(String id) throws NoSuchCheckException {
+		if (id != null && checks.containsKey(id)) {
+			checks.remove(id);
+		} else {
+			throw new NoSuchCheckException();
+		}
+	}
+
+	private void cloneGitRepo(Check check, String repoPath) throws GitAPIException, IOException {
+		final String baseBranch = "master";
+		Git git = Git.cloneRepository()
+				.setURI(check.getRepoUrl())
+				.setDirectory(new File(repoPath))
+				.setBranch(baseBranch)
+				.setBranchesToClone(Lists.newArrayList(baseBranch))
+				.call();
+		git.getRepository().close();
+		File dirToDelete = new File(repoPath + "/.git");
+		FileUtils.deleteDirectory(dirToDelete);
+	}
+
 	//Example: und -db ./db.udb create -languages Java add ./dead-code-detector settings analyze
-	private void createUDB(String checkPath, String repoPath, String repoLanguage) throws IOException {
+	private void analyzeRepo(String checkPath, String repoPath, String repoLanguage) throws Exception {
 		String checkCanonicalPath = new File(checkPath).getCanonicalPath();
 		String sciToolsUndPath = new File(scitoolsDir + "/und").getCanonicalPath();
 		String udbPath = checkCanonicalPath + "/db.udb";
 		String repoCanonicalPath = new File(repoPath).getCanonicalPath();
-		//TODO refactor with ProcBuilde
-		String command = new StringBuilder()
-				.append(sciToolsUndPath)
-				.append(" -db ")
-				.append(udbPath)
-				.append(" create -languages ")
-				.append(repoLanguage)
-				.append(" add ")
-				.append(repoCanonicalPath)
-				.append(" settings analyze")
-				.toString();
-		int code = CommandUtil.runCommand(command);
-		assert code == 0 && new File(udbPath).isFile();
+
+		execProcess(sciToolsUndPath, "-db", udbPath, "create", "-languages", repoLanguage, "add", repoCanonicalPath, "settings", "analyze");
 	}
 
 	//Example: und uperl ./unused.pl -db ./db.udb > results.txt
-	private List<DeadCodeOccurence> analyzeUDB(String checkPath) throws IOException {
+	private List<DeadCodeOccurence> findDeadCodeOccurences(String checkPath) throws Exception {
 		String sciToolsUndPath = new File(scitoolsDir + "/und").getCanonicalPath();
 		String checkCanonicalPath = new File(checkPath).getCanonicalPath();
 		String udbPath = checkCanonicalPath + "/db.udb";
 		String perlScriptPath = new File(".").getCanonicalPath() + "/unused.pl";
-		String output = ProcBuilder.run(sciToolsUndPath, "uperl", perlScriptPath, "-db", udbPath);
-		//TODO set bigger timeout
-		String lines[] = output.split("\\r?\\n");
+
+		String outputString = execProcess(sciToolsUndPath, "uperl", perlScriptPath, "-db", udbPath);
+		return toDeadCodeOccurences(outputString, checkCanonicalPath);
+	}
+
+	private List<DeadCodeOccurence> toDeadCodeOccurences(String outputString, String checkCanonicalPath) {
+		String lines[] = outputString.split("\\r?\\n");
 		return Stream.of(lines)
 				.map(line -> {
 					String[] elements = line.split("&");
@@ -149,6 +154,14 @@ public class CheckCodeService {
 				.collect(Collectors.toList());
 	}
 
+	private String execProcess(String cmd, String... args) {
+		return new ProcBuilder(cmd)
+				.withArgs(args)
+				.withTimeoutMillis(15000)
+				.withExpectedExitStatuses(0)
+				.run()
+				.getOutputString();
+	}
 }
 
 
