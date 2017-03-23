@@ -19,39 +19,40 @@ public class DeadCodeController {
 	@Autowired
 	InspectionService inspectionService;
 
-	@RequestMapping(value = "/checks", method = RequestMethod.POST)
+	@RequestMapping(value = "/inspections", method = RequestMethod.POST)
 	public
 	@ResponseBody
-	ResponseEntity<Inspection> addCheck(@RequestBody GitRepo gitRepo) {
+	ResponseEntity<Inspection> addInspection(@RequestBody GitRepo gitRepo) {
 		log.info("Incoming request: " + gitRepo);
-		//TODO inspection that request is valid
+		//TODO check repo has right naming AND is accessible
 		//TODO add name to repo
+		//TODO check that language is supported and convert it to lowercase
 		Inspection inspection = inspectionService.createInspection(gitRepo);
 		inspectionService.inspectCode(inspection.getInspectionId());
 		return new ResponseEntity<>(inspection, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/checks", method = RequestMethod.GET)
+	@RequestMapping(value = "/inspections", method = RequestMethod.GET)
 	public
 	@ResponseBody
-	ResponseEntity<Collection<Inspection>> getChecks() {
+	ResponseEntity<Collection<Inspection>> getInspections() {
 		return new ResponseEntity<>(
 				inspectionService.getInspections().values(),
 				HttpStatus.OK
 		);
 	}
 
-	@RequestMapping(value = "/checks/{id}", method = RequestMethod.GET)
+	@RequestMapping(value = "/inspections/{id}", method = RequestMethod.GET)
 	public
 	@ResponseBody
-	Inspection getCheckById(@PathVariable String id) {
+	Inspection getInspectionById(@PathVariable String id) {
 		return inspectionService.getInspection(id);
 	}
 
-	@RequestMapping(value = "/checks/{id}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/inspections/{id}", method = RequestMethod.DELETE)
 	public
 	@ResponseBody
-	void deleteCheckById(@PathVariable String id) {
+	void deleteInspectionById(@PathVariable String id) {
 		inspectionService.deleteInspection(id);
 	}
 
