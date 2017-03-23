@@ -42,14 +42,14 @@ targetCompatibility = 1.8
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-web:1.4.1.RELEASE")
     testCompile("org.springframework.boot:spring-boot-starter-test")
-    compile 'com.google.code.gson:gson:2.4'
+//    compile 'com.google.code.gson:gson:2.4'
     compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
-    compile group: 'org.json', name: 'json', version: '20160212'
+//    compile group: 'org.json', name: 'json', version: '20160212'
     compile 'io.springfox:springfox-swagger2:+'
     compile 'io.springfox:springfox-swagger-ui:2.1.2'
-    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+//    compile 'com.squareup.okhttp3:okhttp:3.2.0'
     compile 'net.logstash.logback:logstash-logback-encoder:4.4'
-    compile 'org.codehaus.groovy:groovy-all:2.4.4'
+//    compile 'org.codehaus.groovy:groovy-all:2.4.4'
     compile "org.projectlombok:lombok:1.16.2"
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.6.1.201703071140-r'
     compile group: 'org.buildobjects', name: 'jproc', version: '2.2.1'
@@ -59,9 +59,11 @@ dependencies {
     compile group: 'org.springframework', name: 'spring-test', version: '4.3.2.RELEASE'
     compile 'org.unitils:unitils-core:3.4.2'
     compile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+    compile group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.6'
+    compile group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.6'
     //TODO delete unused repos
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.13'
+    gradleVersion = '2.14.1'
 }
