@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 
 /** 
  * Unit tests of {@link GitHubRepositoryName}
- * Original source code is from from https://github.com/jenkinsci/github-plugin 
+ * Original source code is here https://github.com/jenkinsci/github-plugin 
  * I modified it in a way that suited my needs. 
  **/
 

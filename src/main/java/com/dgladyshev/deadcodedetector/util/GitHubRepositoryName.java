@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
 /** 
- *  Original source code is from from https://github.com/jenkinsci/github-plugin 
- * I modified it in a way that suited my needs. 
+ *  Original source code is here https://github.com/jenkinsci/github-plugin 
+ *  I modified it in a way that suited my needs. 
  * */
 @Slf4j
 public class GitHubRepositoryName {

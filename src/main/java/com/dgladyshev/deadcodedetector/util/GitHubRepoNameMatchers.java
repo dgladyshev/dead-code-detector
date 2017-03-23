@@ -8,8 +8,8 @@ import org.hamcrest.Matcher;
 import static org.hamcrest.Matchers.is;
 
 /** 
- *  Original source code is from from https://github.com/jenkinsci/github-plugin 
- * I modified it in a way that suited my needs. 
+ *  Original source code is here https://github.com/jenkinsci/github-plugin 
+ *  I modified it in a way that suited my needs. 
  * */
 public final class GitHubRepoNameMatchers {
 	private GitHubRepoNameMatchers() {
