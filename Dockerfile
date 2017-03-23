@@ -9,6 +9,19 @@ RUN apt-get update && \
     apt-get install -y oracle-java8-installer && \
     apt-get clean
 
+#configure libraries
+RUN apt-get install libxrender1 -y
+RUN apt-get install libxi6 libgconf-2-4 -y
+RUN apt-get install libxtst6 -y
+
+ENV LD_LIBRARY_PATH /usr/lib/jvm/java-8-oracle/jre/lib/amd64:/scitools/bin/linux64
+ENV PYTHONPATH /scitools/bin/linux64/python
+ENV STIHOME /scitools/bin/linux64
+
+RUN wget http://builds.scitools.com/all_builds/b844/Understand/Understand-4.0.844-Linux-64bit.tgz && tar -zxvf Understand-4.0.844-Linux-64bit.tgz
+RUN rm Understand-4.0.844-Linux-64bit.tgz
+RUN echo "Server: scitools-license.devfactory.com 00000000 9000" > scitools/conf/license/locallicense.dat
+
 ADD . /dead-code-detector
 
 WORKDIR /dead-code-detector

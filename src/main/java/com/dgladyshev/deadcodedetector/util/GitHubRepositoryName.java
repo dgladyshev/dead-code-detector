@@ -1,6 +1,8 @@
 package com.dgladyshev.deadcodedetector.util;
 
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRepositoryURL;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.regex.Matcher;
@@ -13,7 +15,13 @@ import static org.apache.commons.lang.StringUtils.trimToEmpty;
  *  I modified it in a way that suited my needs. 
  * */
 @Slf4j
+@AllArgsConstructor
+@Data
 public class GitHubRepositoryName {
+
+	private String host;
+	private String userName;
+	private String repositoryName;
 
 	private static final Pattern[] URL_PATTERNS = {
 			/**
@@ -52,31 +60,6 @@ public class GitHubRepositoryName {
 		}
 		log.warn("Could not match URL {}", url);
 		throw new MalformedRepositoryURL();
-	}
-
-	@SuppressWarnings("visibilitymodifier")
-	public final String host;
-	@SuppressWarnings("visibilitymodifier")
-	public final String userName;
-	@SuppressWarnings("visibilitymodifier")
-	public final String repositoryName;
-
-	public GitHubRepositoryName(String host, String userName, String repositoryName) {
-		this.host = host;
-		this.userName = userName;
-		this.repositoryName = repositoryName;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public String getUserName() {
-		return userName;
-	}
-
-	public String getRepositoryName() {
-		return repositoryName;
 	}
 
 

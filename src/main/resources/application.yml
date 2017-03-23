@@ -10,28 +10,6 @@ endpoints:
   shutdown:
     enabled: false
 
----
-spring:
-    profiles: local
-
 data.dir: ./data
-scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set it to your local scitools path
+scitools.dir: /scitools/bin/linux64
 
----
-spring:
-    profiles: dev
-
-data.dir: ./data
-scitools.dir: /scitools/bin/linux
-
----
-spring:
-    profiles: stage
-
-url: http://some_url #TODO
----
-
-spring:
-    profiles: prod
-
-url: http://some_url #TODO
