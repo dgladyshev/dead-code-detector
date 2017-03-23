@@ -15,14 +15,14 @@ spring:
     profiles: local
 
 data.dir: ./data
-scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set to you local scitools path
+scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set it to your local scitools path
 
 ---
 spring:
     profiles: dev
 
 data.dir: ./data
-scitools.dir: /scitools
+scitools.dir: /scitools/bin/linux
 
 ---
 spring:

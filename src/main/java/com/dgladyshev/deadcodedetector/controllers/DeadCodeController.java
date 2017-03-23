@@ -3,6 +3,7 @@ package com.dgladyshev.deadcodedetector.controllers;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
+import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,12 +23,13 @@ public class DeadCodeController {
 	@RequestMapping(value = "/inspections", method = RequestMethod.POST)
 	public
 	@ResponseBody
-	ResponseEntity<Inspection> addInspection(@RequestBody GitRepo gitRepo) {
-		log.info("Incoming request: " + gitRepo);
+	ResponseEntity<Inspection> addInspection(@RequestParam String url, @RequestParam String language) {
+		log.info("Incoming request for analysis, url: {}, language: {}", url, language);
 		//TODO check repo has right naming AND is accessible
 		//TODO add name to repo
 		//TODO check that language is supported and convert it to lowercase
-		Inspection inspection = inspectionService.createInspection(gitRepo);
+		String repositoryName = GitHubRepositoryName.create(url).repositoryName;
+		Inspection inspection = inspectionService.createInspection(new GitRepo(repositoryName, url, language));
 		inspectionService.inspectCode(inspection.getInspectionId());
 		return new ResponseEntity<>(inspection, HttpStatus.OK);
 	}
