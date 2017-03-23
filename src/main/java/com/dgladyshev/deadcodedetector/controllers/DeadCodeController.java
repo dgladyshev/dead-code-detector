@@ -4,6 +4,7 @@ import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
+import com.dgladyshev.deadcodedetector.util.URLChecker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,11 +26,10 @@ public class DeadCodeController {
 	@ResponseBody
 	ResponseEntity<Inspection> addInspection(@RequestParam String url, @RequestParam String language) {
 		log.info("Incoming request for analysis, url: {}, language: {}", url, language);
-		//TODO check repo has right naming AND is accessible
-		//TODO add name to repo
 		//TODO check that language is supported and convert it to lowercase
-		String repositoryName = GitHubRepositoryName.create(url).repositoryName;
-		Inspection inspection = inspectionService.createInspection(new GitRepo(repositoryName, url, language));
+		GitRepo gitRepo = toGitRepo(url, language);
+		URLChecker.isAccessible(url);
+		Inspection inspection = inspectionService.createInspection(gitRepo);
 		inspectionService.inspectCode(inspection.getInspectionId());
 		return new ResponseEntity<>(inspection, HttpStatus.OK);
 	}
@@ -56,6 +56,17 @@ public class DeadCodeController {
 	@ResponseBody
 	void deleteInspectionById(@PathVariable String id) {
 		inspectionService.deleteInspection(id);
+	}
+
+	private GitRepo toGitRepo(@RequestParam String url, @RequestParam String language) {
+		GitHubRepositoryName parsedURL = GitHubRepositoryName.create(url);
+		return GitRepo.builder()
+				.host(parsedURL.getHost())
+				.name(parsedURL.getRepositoryName())
+				.user(parsedURL.getUserName())
+				.url(url)
+				.language(language)
+				.build();
 	}
 
 }
