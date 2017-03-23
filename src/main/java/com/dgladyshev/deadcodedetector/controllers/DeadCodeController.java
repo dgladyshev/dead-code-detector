@@ -1,7 +1,8 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
-import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
+import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.entity.SupportedLanguages;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
 import com.dgladyshev.deadcodedetector.util.URLChecker;
@@ -18,16 +19,19 @@ import java.util.Collection;
 @RequestMapping("/api/v1/")
 public class DeadCodeController {
 
+	private InspectionService inspectionService;
+
 	@Autowired
-	InspectionService inspectionService;
+	public DeadCodeController(InspectionService inspectionService) {
+		this.inspectionService = inspectionService;
+	}
 
 	@RequestMapping(value = "/inspections", method = RequestMethod.POST)
 	public
 	@ResponseBody
-	ResponseEntity<Inspection> addInspection(@RequestParam String url, @RequestParam String language) {
+	ResponseEntity<Inspection> addInspection(@RequestParam String url, @RequestParam SupportedLanguages language) {
 		log.info("Incoming request for analysis, url: {}, language: {}", url, language);
-		//TODO check that language is supported and convert it to lowercase
-		GitRepo gitRepo = toGitRepo(url, language);
+		GitRepo gitRepo = toGitRepo(url, language.getName());
 		URLChecker.isAccessible(url);
 		Inspection inspection = inspectionService.createInspection(gitRepo);
 		inspectionService.inspectCode(inspection.getInspectionId());
