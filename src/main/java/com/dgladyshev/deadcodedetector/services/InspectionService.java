@@ -1,9 +1,9 @@
 package com.dgladyshev.deadcodedetector.services;
 
-import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.entity.InspectionStatus;
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurence;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
+import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.entity.InspectionStatus;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +11,7 @@ import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.buildobjects.process.ProcBuilder;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -144,13 +146,18 @@ public class InspectionService {
 		return Stream.of(lines)
 				.map(line -> {
 					String[] elements = line.split("&");
-					return new DeadCodeOccurence(
-							elements[0],
-							elements[1],
-							elements[2].replace(inspectionCanonicalPath + "/", ""),
-							elements[3]
-					);
+					if (!StringUtils.isEmptyOrNull(line) && elements.length > 3) {
+						return new DeadCodeOccurence(
+								elements[0],
+								elements[1],
+								elements[2].replace(inspectionCanonicalPath + "/", ""),
+								elements[3]
+						);
+					} else {
+						return null;
+					}
 				})
+				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 	}
 
