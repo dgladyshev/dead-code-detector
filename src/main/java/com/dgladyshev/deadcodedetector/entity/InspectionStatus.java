@@ -1,6 +1,6 @@
 package com.dgladyshev.deadcodedetector.entity;
 
-public enum CheckStatus {
+public enum InspectionStatus {
 
 	ADDED("ADDED"),
 	PROCESSING("PROCESSING"),
@@ -9,12 +9,8 @@ public enum CheckStatus {
 
 	private String status;
 
-	CheckStatus(String status) {
+	InspectionStatus(String status) {
 		this.status = status;
-	}
-
-	public String status() {
-		return status;
 	}
 
 }
