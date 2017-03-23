@@ -12,13 +12,12 @@ import java.util.List;
 public class Check {
 
 	private String checkId;
-	private String repoUrl;
-	private String repoName;
-	private String repoLanguage;
-	private CheckStatus checkStatus;
+	private GitRepo gitRepo;
+	private CheckStatus status;
 	private String stepDescription;
-	private Long timeAdded;
-	private Long timeCheckFinished;
+	private Long timestampAdded;
+	private Long timestampFinished;
+	private Long timeSpentMillis;
 	private List<DeadCodeOccurence> deadCodeOccurences;
 
 }

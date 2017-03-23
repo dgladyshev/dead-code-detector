@@ -1,7 +1,7 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
 import com.dgladyshev.deadcodedetector.entity.Check;
-import com.dgladyshev.deadcodedetector.entity.CheckRequest;
+import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.services.CheckCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +22,11 @@ public class DeadCodeController {
 	@RequestMapping(value = "/checks", method = RequestMethod.POST)
 	public
 	@ResponseBody
-	ResponseEntity<Check> addCheck(@RequestBody CheckRequest checkRequest) {
-		log.info("Incoming request: " + checkRequest);
+	ResponseEntity<Check> addCheck(@RequestBody GitRepo gitRepo) {
+		log.info("Incoming request: " + gitRepo);
 		//TODO check that request is valid
-		Check check = checkCodeService.createCheck(checkRequest.getUrl(), checkRequest.getName(), checkRequest.getLanguage());
+		//TODO add name to repo
+		Check check = checkCodeService.createCheck(gitRepo);
 		checkCodeService.checkCode(check.getCheckId());
 		return new ResponseEntity<>(check, HttpStatus.OK);
 	}

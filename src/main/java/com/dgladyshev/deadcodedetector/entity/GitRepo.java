@@ -3,10 +3,10 @@ package com.dgladyshev.deadcodedetector.entity;
 import lombok.Data;
 
 @Data
-public class CheckRequest {
+public class GitRepo {
 
-	private String url;
 	private String name;
+	private String url;
 	private String language;
 
 }

@@ -3,6 +3,7 @@ package com.dgladyshev.deadcodedetector.services;
 import com.dgladyshev.deadcodedetector.entity.Check;
 import com.dgladyshev.deadcodedetector.entity.CheckStatus;
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurence;
+import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchCheckException;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -42,44 +43,43 @@ public class CheckCodeService {
 	public void checkCode(String checkId) {
 		Check check = checks.get(checkId);
 		String checkPath = dataDir + "/" + checkId;
-		String repoPath = checkPath + "/" + check.getRepoName();
+		String repoPath = checkPath + "/" + check.getGitRepo().getName();
 		try {
-			check.setCheckStatus(CheckStatus.PROCESSING);
-			check.setStepDescription("Step 1/5. Downloading git repository.");
+			check.setStatus(CheckStatus.PROCESSING);
+			check.setStepDescription("Step 1/5. Downloading git repository");
 			cloneGitRepo(check, repoPath);
-			check.setStepDescription("Step 2/5. Request to analyze repository has been added to a queue.");
+			check.setStepDescription("Step 2/5. Request to analyze repository has been added to a queue");
+			executor.submit(() -> {
+				try {
+					check.setStepDescription("Step 3/5. Analyzing git repository and creating .udb file");
+					analyzeRepo(checkPath, repoPath, check.getGitRepo().getLanguage());
+					check.setStepDescription("Step 4/5. Searching for dead code occurrences");
+					List<DeadCodeOccurence> deadCodeOccurences = findDeadCodeOccurences(checkPath);
+					check.setDeadCodeOccurences(deadCodeOccurences);
+					check.setTimestampFinished(System.currentTimeMillis());
+					check.setTimeSpentMillis(check.getTimestampFinished() - check.getTimestampAdded());
+					check.setStepDescription("Step 5/5. Processing completed");
+					check.setStatus(CheckStatus.COMPLETED);
+				} catch (Exception e) {
+					log.error("Error occurred for check id: {}. Error cased by: {}, details: {}", checkId, e.getCause(), e.getMessage());
+					check.setStatus(CheckStatus.FAILED);
+				}
+			});
 		} catch (Exception e) {
 			log.error("Error occured for check id: {}. Error cased by: {}, details: {}", checkId, e.getCause(), e.getMessage());
-			check.setCheckStatus(CheckStatus.FAILED);
+			check.setStatus(CheckStatus.FAILED);
 		}
-		executor.submit(() -> {
-			try {
-				check.setStepDescription("Step 3/5. Analyzing git repository and creating .udb file.");
-				analyzeRepo(checkPath, repoPath, check.getRepoLanguage());
-				check.setStepDescription("Step 4/5. Searching for dead code occurrences.");
-				List<DeadCodeOccurence> deadCodeOccurences = findDeadCodeOccurences(checkPath);
-				check.setDeadCodeOccurences(deadCodeOccurences);
-				check.setTimeCheckFinished(System.currentTimeMillis());
-				check.setStepDescription("Step 5/5. Processing completed.");
-				check.setCheckStatus(CheckStatus.COMPLETED);
-			} catch (Exception e) {
-				log.error("Error occurred for check id: {}. Error cased by: {}, details: {}", checkId, e.getCause(), e.getMessage());
-				check.setCheckStatus(CheckStatus.FAILED);
-			}
-		});
 	}
 
-	public Check createCheck(String url, String name, String language) {
+	public Check createCheck(GitRepo repo) {
 		String checkId = java.util.UUID.randomUUID().toString();
 		checks.put(
 				checkId,
 				Check.builder()
 						.checkId(checkId)
-						.repoUrl(url)
-						.repoName(name)
-						.repoLanguage(language)
-						.timeAdded(System.currentTimeMillis())
-						.checkStatus(CheckStatus.ADDED)
+						.gitRepo(repo)
+						.timestampAdded(System.currentTimeMillis())
+						.status(CheckStatus.ADDED)
 						.build()
 		);
 		return checks.get(checkId);
@@ -108,7 +108,7 @@ public class CheckCodeService {
 	private void cloneGitRepo(Check check, String repoPath) throws GitAPIException, IOException {
 		final String baseBranch = "master";
 		Git git = Git.cloneRepository()
-				.setURI(check.getRepoUrl())
+				.setURI(check.getGitRepo().getUrl())
 				.setDirectory(new File(repoPath))
 				.setBranch(baseBranch)
 				.setBranchesToClone(Lists.newArrayList(baseBranch))
