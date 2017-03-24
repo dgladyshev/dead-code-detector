@@ -9,6 +9,7 @@ import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,7 +35,10 @@ public class DeadCodeController {
         this.urlCheckerService = urlCheckerService;
     }
 
-    @RequestMapping(value = "/inspections", method = RequestMethod.POST)
+    @RequestMapping(
+            value = "/inspections",
+            method = RequestMethod.POST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Inspection addInspection(@RequestParam String url,
                                     @RequestParam SupportedLanguages language,
@@ -49,19 +53,28 @@ public class DeadCodeController {
         return inspection;
     }
 
-    @RequestMapping(value = "/inspections", method = RequestMethod.GET)
+    @RequestMapping(
+            value = "/inspections",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Collection<Inspection> getInspections() {
         return inspectionsRepository.getInspections().values();
     }
 
-    @RequestMapping(value = "/inspections/{id}", method = RequestMethod.GET)
+    @RequestMapping(
+            value = "/inspections/{id}",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Inspection getInspectionById(@PathVariable String id) {
         return inspectionsRepository.getInspection(id);
     }
 
-    @RequestMapping(value = "/inspections/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(
+            value = "/inspections/{id}",
+            method = RequestMethod.DELETE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void deleteInspectionById(@PathVariable String id) {
         inspectionsRepository.deleteInspection(id);
