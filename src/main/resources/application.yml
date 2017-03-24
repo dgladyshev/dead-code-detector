@@ -12,6 +12,6 @@ endpoints:
 
 data.dir: ./data
 scitools.dir: /Users/dgladyshev/scitools/bin/macosx
-max.stored.inspections: 2
+max.stored.inspections: 100000
 
 
