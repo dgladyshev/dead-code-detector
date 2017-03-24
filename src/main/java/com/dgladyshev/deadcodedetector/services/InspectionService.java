@@ -2,6 +2,7 @@ package com.dgladyshev.deadcodedetector.services;
 
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurence;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.entity.InspectionState;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
 import java.io.File;
@@ -46,16 +47,15 @@ public class InspectionService {
         String inspectionPath = dataDir + "/" + id;
         String repoPath = inspectionPath + "/" + inspection.getGitRepo().getName();
         try {
-            inspection.startProcessing();
+            inspection.changeState(InspectionState.DOWNLOADING);
             gitService.downloadRepo(inspection.getGitRepo().getUrl(), repoPath);
-            inspection.repoDownloaded();
+            inspection.changeState(InspectionState.IN_QUEUE);
             executor.submit(() -> {
                 try {
-                    inspection.analyzeRepository();
+                    inspection.changeState(InspectionState.PROCESSING);
                     analyzeRepo(inspectionPath, repoPath, inspection.getGitRepo().getLanguage());
-                    inspection.inspectRepository();
                     List<DeadCodeOccurence> deadCodeOccurrences = findDeadCodeOccurences(inspectionPath);
-                    inspection.completeInspection(deadCodeOccurrences);
+                    inspection.complete(deadCodeOccurrences);
                 } catch (IOException ex) {
                     inspection.fail(ex);
                 }

@@ -2,7 +2,7 @@ package com.dgladyshev.deadcodedetector.repositories;
 
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.entity.InspectionStatus;
+import com.dgladyshev.deadcodedetector.entity.InspectionState;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -35,7 +35,7 @@ public class InspectionsRepository {
                         .inspectionId(id)
                         .gitRepo(repo)
                         .timestampAdded(System.currentTimeMillis())
-                        .status(InspectionStatus.ADDED)
+                        .state(InspectionState.ADDED)
                         .build()
         );
         return inspections.get(id);
