@@ -5,9 +5,9 @@ import static org.apache.commons.lang.StringUtils.trimToEmpty;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.SupportedLanguages;
+import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
-import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,22 +24,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeadCodeController {
 
     private final InspectionService inspectionService;
+    private final InspectionsRepository inspectionsRepository;
     private final UrlCheckerService urlCheckerService;
 
     @Autowired
-    public DeadCodeController(InspectionService inspectionService, UrlCheckerService urlCheckerService) {
+    public DeadCodeController(InspectionService inspectionService,
+                              InspectionsRepository inspectionsRepository,
+                              UrlCheckerService urlCheckerService) {
         this.inspectionService = inspectionService;
+        this.inspectionsRepository = inspectionsRepository;
         this.urlCheckerService = urlCheckerService;
     }
 
     @RequestMapping(value = "/inspections", method = RequestMethod.POST)
     @ResponseBody
     public Inspection addInspection(@RequestParam String url, @RequestParam SupportedLanguages language) {
+        log.info("Incoming request for analysis, url: {}, language: {}", url, language);
         String trimmedUrl = trimToEmpty(url);
-        log.info("Incoming request for analysis, url: {}, language: {}", trimmedUrl, language);
-        GitRepo gitRepo = toGitRepo(trimmedUrl, language.getName());
+        GitRepo gitRepo = new GitRepo(trimmedUrl, language.getName());
         urlCheckerService.checkAccessibility(trimmedUrl.replace(".git", ""));
-        Inspection inspection = inspectionService.createInspection(gitRepo);
+        Inspection inspection = inspectionsRepository.createInspection(gitRepo);
         inspectionService.inspectCode(inspection.getInspectionId());
         return inspection;
     }
@@ -47,30 +51,19 @@ public class DeadCodeController {
     @RequestMapping(value = "/inspections", method = RequestMethod.GET)
     @ResponseBody
     public Collection<Inspection> getInspections() {
-        return inspectionService.getInspections().values();
+        return inspectionsRepository.getInspections().values();
     }
 
     @RequestMapping(value = "/inspections/{id}", method = RequestMethod.GET)
     @ResponseBody
     public Inspection getInspectionById(@PathVariable String id) {
-        return inspectionService.getInspection(id);
+        return inspectionsRepository.getInspection(id);
     }
 
     @RequestMapping(value = "/inspections/{id}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteInspectionById(@PathVariable String id) {
-        inspectionService.deleteInspection(id);
-    }
-
-    private GitRepo toGitRepo(@RequestParam String url, @RequestParam String language) {
-        GitHubRepositoryName parsedUrl = GitHubRepositoryName.create(url);
-        return GitRepo.builder()
-                .host(parsedUrl.getHost())
-                .name(parsedUrl.getRepositoryName())
-                .user(parsedUrl.getUserName())
-                .url(url)
-                .language(language)
-                .build();
+        inspectionsRepository.deleteInspection(id);
     }
 
 }

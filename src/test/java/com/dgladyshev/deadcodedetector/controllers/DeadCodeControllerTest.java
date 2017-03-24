@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import java.util.HashMap;
@@ -41,6 +42,9 @@ public class DeadCodeControllerTest {
     private InspectionService inspectionService;
 
     @MockBean
+    private InspectionsRepository inspectionsRepository;
+
+    @MockBean
     private UrlCheckerService urlCheckerService;
 
     @MockBean
@@ -50,7 +54,7 @@ public class DeadCodeControllerTest {
     public void testGetInspections() throws Exception {
         HashMap<String, Inspection> map = new HashMap<>();
         map.put(TEST_INSPECTION.getInspectionId(), TEST_INSPECTION);
-        given(this.inspectionService.getInspections()).willReturn(map);
+        given(inspectionsRepository.getInspections()).willReturn(map);
         this.mockMvc.perform(get("/api/v1/inspections")
                                      .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
@@ -59,7 +63,7 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testGetInspectionById() throws Exception {
-        given(this.inspectionService.getInspection(TEST_INSPECTION.getInspectionId()))
+        given(inspectionsRepository.getInspection(TEST_INSPECTION.getInspectionId()))
                 .willReturn(TEST_INSPECTION);
         this.mockMvc.perform(get("/api/v1/inspections/" + TEST_INSPECTION.getInspectionId())
                                      .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -76,7 +80,7 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        when(inspectionService.createInspection(any())).thenReturn(
+        when(inspectionsRepository.createInspection(any())).thenReturn(
                 TEST_INSPECTION
         );
         this.mockMvc.perform(post("/api/v1/inspections")

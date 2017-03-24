@@ -1,23 +1,18 @@
 package com.dgladyshev.deadcodedetector.services;
 
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurence;
-import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.entity.InspectionStatus;
-import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
+import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
+import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.buildobjects.process.ProcBuilder;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,26 +30,19 @@ public class InspectionService {
     @Value("${data.dir}")
     private String dataDir;
 
-    @Value("${max.stored.inspections}")
-    private int maxStoredInspections;
+    private final GitService gitService;
+    private final InspectionsRepository inspectionsRepository;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Autowired
-    private GitService gitService;
-
-    private final Map<String, Inspection> inspections = Collections.synchronizedMap(
-            new LinkedHashMap<String, Inspection>() {
-                @Override
-                protected boolean removeEldestEntry(final Map.Entry eldest) {
-                    return size() > maxStoredInspections;
-                }
-            }
-    );
-
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    public InspectionService(GitService gitService, InspectionsRepository inspectionsRepository) {
+        this.gitService = gitService;
+        this.inspectionsRepository = inspectionsRepository;
+    }
 
     @Async
     public void inspectCode(String id) {
-        Inspection inspection = inspections.get(id);
+        Inspection inspection = inspectionsRepository.getInspection(id);
         String inspectionPath = dataDir + "/" + id;
         String repoPath = inspectionPath + "/" + inspection.getGitRepo().getName();
         try {
@@ -77,63 +65,25 @@ public class InspectionService {
         }
     }
 
-    public Inspection createInspection(GitRepo repo) {
-        String id = java.util.UUID.randomUUID().toString();
-        inspections.put(
-                id,
-                Inspection.builder()
-                        .inspectionId(id)
-                        .gitRepo(repo)
-                        .timestampAdded(System.currentTimeMillis())
-                        .status(InspectionStatus.ADDED)
-                        .build()
-        );
-        return inspections.get(id);
-    }
-
-    public Map<String, Inspection> getInspections() {
-        return inspections;
-    }
-
-    public Inspection getInspection(String id) throws NoSuchInspectionException {
-        if (id != null && inspections.containsKey(id)) {
-            return inspections.get(id);
-        } else {
-            throw new NoSuchInspectionException("There is no record of any inspection with specified id");
-        }
-    }
-
-    public void deleteInspection(String id) throws NoSuchInspectionException {
-        if (id != null && inspections.containsKey(id)) {
-            inspections.remove(id);
-        } else {
-            throw new NoSuchInspectionException("Cannot delete inspection because there is none with such id");
-        }
-    }
-
-
     //Example: und -db ./db.udb create -languages Java add ./dead-code-detector settings analyze
-    private void analyzeRepo(String inspectionPath, String repoPath, String repoLanguage) throws IOException {
-        //TODO cleanup
-        String inspectionCanonicalPath = new File(inspectionPath).getCanonicalPath();
-        String sciToolsUndPath = new File(scitoolsDir + "/und").getCanonicalPath();
-        String udbPath = inspectionCanonicalPath + "/db.udb";
-        String repoCanonicalPath = new File(repoPath).getCanonicalPath();
-
-        execProcess(sciToolsUndPath, "-db", udbPath, "create", "-languages", repoLanguage, "add", repoCanonicalPath,
-                    "settings", "analyze");
+    public void analyzeRepo(String inspectionDirPath, String repoPath, String repoLanguage) throws IOException {
+        CommandLineUtils.execProcess(
+                getCanonicalPath(scitoolsDir + "/und"),
+                "-db", getCanonicalPath(inspectionDirPath + "/db.udb"), "create",
+                "-languages", repoLanguage,
+                "add", getCanonicalPath(repoPath),
+                "settings", "analyze"
+        );
     }
 
     //Example: und uperl ./unused.pl -db ./db.udb > results.txt
-    private List<DeadCodeOccurence> findDeadCodeOccurences(String inspectionPath) throws IOException {
-        //TODO cleanup
-        String sciToolsUndPath = new File(scitoolsDir + "/und").getCanonicalPath();
-        String inspectionCanonicalPath = new File(inspectionPath).getCanonicalPath();
-        String udbPath = inspectionCanonicalPath + "/db.udb";
-        String perlScriptPath = new File(".").getCanonicalPath() + "/unused.pl";
-
-        String outputString = execProcess(sciToolsUndPath, "uperl", perlScriptPath, "-db", udbPath);
-        return toDeadCodeOccurences(outputString, inspectionCanonicalPath);
+    public List<DeadCodeOccurence> findDeadCodeOccurences(String inspectionDirPath) throws IOException {
+        String outputString = CommandLineUtils.execProcess(
+                getCanonicalPath(scitoolsDir + "/und"),
+                "uperl", getCanonicalPath("./unused.pl"),
+                "-db", getCanonicalPath(inspectionDirPath + "/db.udb")
+        );
+        return toDeadCodeOccurences(outputString, getCanonicalPath(inspectionDirPath));
     }
 
     private List<DeadCodeOccurence> toDeadCodeOccurences(String outputString, String inspectionCanonicalPath) {
@@ -156,14 +106,10 @@ public class InspectionService {
                 .collect(Collectors.toList());
     }
 
-    private String execProcess(String cmd, String... args) {
-        return new ProcBuilder(cmd)
-                .withArgs(args)
-                .withTimeoutMillis(15000)
-                .withExpectedExitStatuses(0)
-                .run()
-                .getOutputString();
+    private static String getCanonicalPath(String relativePath) throws IOException {
+        return new File(relativePath).getCanonicalPath();
     }
+
 }
 
 
