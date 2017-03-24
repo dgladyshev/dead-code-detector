@@ -1,83 +1,93 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
-import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.services.InspectionService;
-import com.dgladyshev.deadcodedetector.util.URLChecker;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
-@RunWith(PowerMockRunner.class)
-@WebMvcTest(DeadCodeController.class)
-@WebAppConfiguration
-@PrepareForTest({URLChecker.class})
+import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.services.InspectionService;
+import com.dgladyshev.deadcodedetector.util.UrlCheckerService;
+import java.util.HashMap;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.client.RestTemplate;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class DeadCodeControllerTest {
 
-	private MockMvc mockMvc;
+    private static final Inspection TEST_INSPECTION = Inspection
+            .builder()
+            .inspectionId("someId")
+            .build();
 
-	@InjectMocks
-	private DeadCodeController deadCodeController;
+    @Autowired
+    private MockMvc mockMvc;
 
-	@Mock
-	private InspectionService inspectionService;
+    @MockBean
+    private InspectionService inspectionService;
 
-	@Before
-	public void setup() throws Exception {
-		this.mockMvc = standaloneSetup(deadCodeController).build();
-		mockStatic(URLChecker.class);
-		MockitoAnnotations.initMocks(this);
-	}
+    @MockBean
+    private UrlCheckerService urlCheckerService;
 
-	@Test
-	public void testGetInspections() throws Exception {
-		this.mockMvc.perform(get("/api/v1/inspections")
-				.accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-				.andExpect(status().isOk());
-	}
+    @MockBean
+    private RestTemplate restTemplate;
 
-	@Test
-	public void testGetInspectionById() throws Exception {
-		this.mockMvc.perform(get("/api/v1/inspections/someId")
-				.accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-				.andExpect(status().isOk());
-	}
+    @Test
+    public void testGetInspections() throws Exception {
+        HashMap<String, Inspection> map = new HashMap<>();
+        map.put(TEST_INSPECTION.getInspectionId(), TEST_INSPECTION);
+        given(this.inspectionService.getInspections()).willReturn(map);
+        this.mockMvc.perform(get("/api/v1/inspections")
+                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isOk());
+        //TODO check returned data as well
+    }
 
-	@Test
-	public void testDeleteInspectionById() throws Exception {
-		this.mockMvc.perform(delete("/api/v1/inspections/someId")
-				.accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-				.andExpect(status().isOk());
-	}
+    @Test
+    public void testGetInspectionById() throws Exception {
+        given(this.inspectionService.getInspection(TEST_INSPECTION.getInspectionId()))
+                .willReturn(TEST_INSPECTION);
+        this.mockMvc.perform(get("/api/v1/inspections/" + TEST_INSPECTION.getInspectionId())
+                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isOk());
+        //TODO check returned data as well
+    }
 
-	@Test
-	public void testAddInspectionById() throws Exception {
-		//TODO improve
-		when(inspectionService.createInspection(any())).thenReturn(
-				Inspection.builder().inspectionId("someId").build()
-		);
-		this.mockMvc.perform(post("/api/v1/inspections")
-				.param("url", "https://github.com/dgladyshev/dead-code-detector.git")
-				.param("language", "JAVA")
-				.contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-				.accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-				.andExpect(status().isOk());
-	}
+    @Test
+    public void testDeleteInspectionById() throws Exception {
+        this.mockMvc.perform(delete("/api/v1/inspections/someId")
+                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testAddInspectionById() throws Exception {
+        //TODO improve
+        when(inspectionService.createInspection(any())).thenReturn(
+                TEST_INSPECTION
+        );
+        this.mockMvc.perform(post("/api/v1/inspections")
+                                     .param("url", "https://github.com/dgladyshev/dead-code-detector.git")
+                                     .param("language", "JAVA")
+                                     .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isOk());
+        //TODO check returned data as well
+    }
 
 
 }

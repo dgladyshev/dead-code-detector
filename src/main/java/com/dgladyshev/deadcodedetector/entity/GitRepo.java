@@ -9,10 +9,10 @@ import lombok.Data;
 @Data
 public class GitRepo {
 
-	private String name;
-	private String user;
-	private String host;
-	private String url;
-	private String language;
+    private String name;
+    private String user;
+    private String host;
+    private String url;
+    private String language;
 
 }

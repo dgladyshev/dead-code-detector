@@ -4,9 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -18,13 +15,10 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableAsync
 public class Application {
 
-	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
-	}
-
-	@Bean
-	public ConversionService conversionService() {
-		return new DefaultConversionService();
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
 
 }
+
+

@@ -11,5 +11,7 @@ endpoints:
     enabled: false
 
 data.dir: ./data
-scitools.dir: /scitools/bin/linux64
+scitools.dir: /Users/dgladyshev/scitools/bin/macosx
+max.inmemory.inspections: 100000
+
 

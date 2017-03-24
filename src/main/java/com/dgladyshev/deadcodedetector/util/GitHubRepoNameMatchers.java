@@ -1,66 +1,70 @@
 package com.dgladyshev.deadcodedetector.util;
 
+import static org.hamcrest.Matchers.is;
+
 import org.hamcrest.Description;
 import org.hamcrest.DiagnosingMatcher;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 
-import static org.hamcrest.Matchers.is;
-
-/** 
- *  Original source code is here https://github.com/jenkinsci/github-plugin 
- *  I modified it in a way that suited my needs. 
- * */
+/**
+ * Original source code is here https://github.com/jenkinsci/github-plugin
+ * I modified it in a way that suited my needs.
+ */
 public final class GitHubRepoNameMatchers {
-	private GitHubRepoNameMatchers() {
-	}
 
-	public static Matcher<String> repo(final Matcher<GitHubRepositoryName> matcher) {
-		return new DiagnosingMatcher<String>() {
-			@Override
-			protected boolean matches(Object url, Description mismatchDescription) {
-				mismatchDescription.appendText("for url ").appendValue(url).appendText(" instead of expected repo ");
+    private GitHubRepoNameMatchers() {
+    }
 
-				if (url != null && !(url instanceof String)) {
-					return false;
-				}
+    public static Matcher<String> repo(final Matcher<GitHubRepositoryName> matcher) {
+        return new DiagnosingMatcher<String>() {
+            @Override
+            protected boolean matches(Object url, Description mismatchDescription) {
+                mismatchDescription.appendText("for url ").appendValue(url)
+                        .appendText(" instead of expected repo ");
 
-				GitHubRepositoryName repo = GitHubRepositoryName.create((String) url);
-				matcher.describeMismatch(repo, mismatchDescription);
-				return matcher.matches(repo);
-			}
+                if (url != null && !(url instanceof String)) {
+                    return false;
+                }
 
-			@Override
-			public void describeTo(Description description) {
-				description.appendText("GitHub full repo ").appendDescriptionOf(matcher);
-			}
-		};
-	}
+                GitHubRepositoryName repo = GitHubRepositoryName.create((String) url);
+                matcher.describeMismatch(repo, mismatchDescription);
+                return matcher.matches(repo);
+            }
 
-	public static Matcher<GitHubRepositoryName> withHost(String host) {
-		return new FeatureMatcher<GitHubRepositoryName, String>(is(host), "with host", "host") {
-			@Override
-			protected String featureValueOf(GitHubRepositoryName repo) {
-				return repo.getHost();
-			}
-		};
-	}
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("GitHub full repo ").appendDescriptionOf(matcher);
+            }
+        };
+    }
 
-	public static Matcher<GitHubRepositoryName> withUserName(String username) {
-		return new FeatureMatcher<GitHubRepositoryName, String>(is(username), "with username", "username") {
-			@Override
-			protected String featureValueOf(GitHubRepositoryName repo) {
-				return repo.getUserName();
-			}
-		};
-	}
+    public static Matcher<GitHubRepositoryName> withHost(String host) {
+        return new FeatureMatcher<GitHubRepositoryName, String>(is(host), "with host", "host") {
+            @Override
+            protected String featureValueOf(GitHubRepositoryName repo) {
+                return repo.getHost();
+            }
+        };
+    }
 
-	public static Matcher<GitHubRepositoryName> withRepoName(String reponame) {
-		return new FeatureMatcher<GitHubRepositoryName, String>(is(reponame), "with reponame", "reponame") {
-			@Override
-			protected String featureValueOf(GitHubRepositoryName repo) {
-				return repo.getRepositoryName();
-			}
-		};
-	}
+    public static Matcher<GitHubRepositoryName> withUserName(String username) {
+        return new FeatureMatcher<GitHubRepositoryName, String>(is(username), "with username",
+                                                                "username") {
+            @Override
+            protected String featureValueOf(GitHubRepositoryName repo) {
+                return repo.getUserName();
+            }
+        };
+    }
+
+    public static Matcher<GitHubRepositoryName> withRepoName(String reponame) {
+        return new FeatureMatcher<GitHubRepositoryName, String>(is(reponame), "with reponame",
+                                                                "reponame") {
+            @Override
+            protected String featureValueOf(GitHubRepositoryName repo) {
+                return repo.getRepositoryName();
+            }
+        };
+    }
 }

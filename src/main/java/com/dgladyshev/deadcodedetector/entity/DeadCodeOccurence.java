@@ -9,10 +9,10 @@ import lombok.Data;
 @Builder
 public class DeadCodeOccurence {
 
-	private String type;
-	private String name;
-	private String file;
-	private String line;
+    private String type;
+    private String name;
+    private String file;
+    private String line;
 
 }
 
