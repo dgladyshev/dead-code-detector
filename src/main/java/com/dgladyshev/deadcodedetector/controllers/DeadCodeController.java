@@ -1,7 +1,5 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
-
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.SupportedLanguages;
@@ -42,10 +40,10 @@ public class DeadCodeController {
                                     @RequestParam SupportedLanguages language,
                                     @RequestParam(defaultValue = "master") String branch) {
         log.info("Incoming request for analysis, url: {}, language: {}", url, language);
-        String trimmedUrl = trimToEmpty(url);
-        String trimmedBranch = trimToEmpty(branch);
-        GitRepo gitRepo = new GitRepo(trimmedUrl, language.getName(), trimmedBranch);
-        urlCheckerService.checkAccessibility(trimmedUrl.replace(".git", ""));
+        GitRepo gitRepo = new GitRepo(url, language.getName(), branch);
+        urlCheckerService.checkAccessibility(
+                gitRepo.getUrl().replace(".git", "")
+        );
         Inspection inspection = inspectionsRepository.createInspection(gitRepo);
         inspectionService.inspectCode(inspection.getInspectionId());
         return inspection;

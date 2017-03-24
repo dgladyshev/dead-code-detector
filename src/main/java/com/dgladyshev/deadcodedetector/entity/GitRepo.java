@@ -1,5 +1,7 @@
 package com.dgladyshev.deadcodedetector.entity;
 
+import static org.apache.commons.lang.StringUtils.trimToEmpty;
+
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,9 +24,9 @@ public class GitRepo {
         this.name = parsedUrl.getRepositoryName();
         this.user = parsedUrl.getUserName();
         this.host = parsedUrl.getHost();
-        this.url = url;
+        this.url = trimToEmpty(url);
         this.language = language;
-        this.branch = branch;
+        this.branch = trimToEmpty(branch);
     }
 
 }
