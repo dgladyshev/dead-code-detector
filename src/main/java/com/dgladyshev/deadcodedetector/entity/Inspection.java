@@ -17,8 +17,8 @@ public class Inspection {
     private GitRepo gitRepo;
     private InspectionState state;
     private String stateDescription;
-    private Long timestampAdded;
-    private Long timestampFinished;
+    private Long timestampInspectionCreated;
+    private Long timestampAnalysisFinished;
     private Long timestampAnalysisStart;
     private Long timeSpentAnalyzingMillis;
     private List<DeadCodeOccurence> deadCodeOccurrences;
@@ -37,12 +37,12 @@ public class Inspection {
                 this.setStateDescription("Analyzing git repository and searching for dead code occurrences");
                 break;
             case COMPLETED:
-                this.setTimestampFinished(System.currentTimeMillis());
-                this.setTimeSpentAnalyzingMillis(this.getTimestampFinished() - this.getTimestampAnalysisStart());
+                this.setTimestampAnalysisFinished(System.currentTimeMillis());
+                this.setTimeSpentAnalyzingMillis(this.getTimestampAnalysisFinished() - this.getTimestampAnalysisStart());
                 this.setStateDescription("Processing completed");
                 break;
             case FAILED:
-                this.setTimestampFinished(System.currentTimeMillis());
+                this.setTimestampAnalysisFinished(System.currentTimeMillis());
                 break;
             default:
                 break;

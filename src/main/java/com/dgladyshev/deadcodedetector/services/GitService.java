@@ -1,5 +1,6 @@
 package com.dgladyshev.deadcodedetector.services;
 
+import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
@@ -14,18 +15,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class GitService {
 
-    public void downloadRepo(String repoUrl, String repoPath) throws GitAPIException, IOException {
-        //TODO add ability to choose branch
-        final String baseBranch = "master";
+    public void downloadRepo(GitRepo gitRepo, String inspectionDirPath, String branch)
+            throws GitAPIException, IOException {
+        String repoPath = inspectionDirPath + "/" + gitRepo.getName();
         try {
-            cloneRepo(repoUrl, repoPath, baseBranch);
+            cloneRepo(gitRepo.getUrl(), repoPath, branch);
         } catch (TransportException ex) {
             //TODO remove this when JGit will support HTTP 301 redirects
             //BugTracker link: https://bugs.eclipse.org/bugs/show_bug.cgi?id=465167
             //try to clone repository by replacing http to https in the url if HTTP 301 redirect happened
             FileUtils.deleteDirectory(new File(repoPath));
             if (ex.getMessage().contains(": 301 Moved Permanently")) {
-                cloneRepo("https" + repoUrl.substring(4), repoPath, baseBranch);
+                cloneRepo("https" + gitRepo.getUrl().substring(4), repoPath, branch);
             }
         }
         File dirToDelete = new File(repoPath + "/.git");

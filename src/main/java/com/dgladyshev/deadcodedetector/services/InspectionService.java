@@ -1,6 +1,7 @@
 package com.dgladyshev.deadcodedetector.services;
 
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurence;
+import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.InspectionState;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
@@ -44,17 +45,21 @@ public class InspectionService {
     @Async
     public void inspectCode(String id) {
         Inspection inspection = inspectionsRepository.getInspection(id);
-        String inspectionPath = dataDir + "/" + id;
-        String repoPath = inspectionPath + "/" + inspection.getGitRepo().getName();
+        GitRepo gitRepo = inspection.getGitRepo();
+        String inspectionDirPath = dataDir + "/" + id;
         try {
             inspection.changeState(InspectionState.DOWNLOADING);
-            gitService.downloadRepo(inspection.getGitRepo().getUrl(), repoPath);
+            gitService.downloadRepo(gitRepo, inspectionDirPath, "master"); //TODO add ability to switch branch
             inspection.changeState(InspectionState.IN_QUEUE);
             executor.submit(() -> {
                 try {
                     inspection.changeState(InspectionState.PROCESSING);
-                    analyzeRepo(inspectionPath, repoPath, inspection.getGitRepo().getLanguage());
-                    List<DeadCodeOccurence> deadCodeOccurrences = findDeadCodeOccurences(inspectionPath);
+                    analyzeRepo(
+                            inspectionDirPath,
+                            gitRepo.getName(),
+                            gitRepo.getLanguage()
+                    );
+                    List<DeadCodeOccurence> deadCodeOccurrences = findDeadCodeOccurences(inspectionDirPath);
                     inspection.complete(deadCodeOccurrences);
                 } catch (IOException ex) {
                     inspection.fail(ex);
@@ -66,12 +71,12 @@ public class InspectionService {
     }
 
     //Example: und -db ./db.udb create -languages Java add ./dead-code-detector settings analyze
-    public void analyzeRepo(String inspectionDirPath, String repoPath, String repoLanguage) throws IOException {
+    public void analyzeRepo(String inspectionDirPath, String repoName, String repoLanguage) throws IOException {
         CommandLineUtils.execProcess(
                 getCanonicalPath(scitoolsDir + "/und"),
                 "-db", getCanonicalPath(inspectionDirPath + "/db.udb"), "create",
                 "-languages", repoLanguage,
-                "add", getCanonicalPath(repoPath),
+                "add", getCanonicalPath(inspectionDirPath + "/" + repoName),
                 "settings", "analyze"
         );
     }
