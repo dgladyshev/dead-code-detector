@@ -15,14 +15,16 @@ public class GitRepo {
     private String host;
     private String url;
     private String language;
+    private String branch;
 
-    public GitRepo(String url, String language) {
+    public GitRepo(String url, String language, String branch) {
         GitHubRepositoryName parsedUrl = GitHubRepositoryName.create(url);
-        this.host = parsedUrl.getHost();
-        this.user = parsedUrl.getUserName();
         this.name = parsedUrl.getRepositoryName();
+        this.user = parsedUrl.getUserName();
+        this.host = parsedUrl.getHost();
         this.url = url;
         this.language = language;
+        this.branch = branch;
     }
 
 }

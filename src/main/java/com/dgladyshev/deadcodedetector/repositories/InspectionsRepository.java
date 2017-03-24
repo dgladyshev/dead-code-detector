@@ -34,7 +34,7 @@ public class InspectionsRepository {
                 Inspection.builder()
                         .inspectionId(id)
                         .gitRepo(repo)
-                        .timestampAdded(System.currentTimeMillis())
+                        .timestampInspectionCreated(System.currentTimeMillis())
                         .state(InspectionState.ADDED)
                         .build()
         );

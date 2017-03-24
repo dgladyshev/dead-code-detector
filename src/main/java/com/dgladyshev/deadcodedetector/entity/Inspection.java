@@ -56,7 +56,7 @@ public class Inspection {
 
     public void fail(Exception ex) {
         log.error("Error occurred for inspection id: {}. Error: {}", this.inspectionId, ex);
-        this.setStateDescription("Processing failed because of " + ex.getMessage());
+        this.setStateDescription(ex.getMessage());
         changeState(InspectionState.FAILED);
     }
 }

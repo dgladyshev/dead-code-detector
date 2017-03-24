@@ -38,10 +38,13 @@ public class DeadCodeController {
 
     @RequestMapping(value = "/inspections", method = RequestMethod.POST)
     @ResponseBody
-    public Inspection addInspection(@RequestParam String url, @RequestParam SupportedLanguages language) {
+    public Inspection addInspection(@RequestParam String url,
+                                    @RequestParam SupportedLanguages language,
+                                    @RequestParam(defaultValue = "master") String branch) {
         log.info("Incoming request for analysis, url: {}, language: {}", url, language);
         String trimmedUrl = trimToEmpty(url);
-        GitRepo gitRepo = new GitRepo(trimmedUrl, language.getName());
+        String trimmedBranch = trimToEmpty(branch);
+        GitRepo gitRepo = new GitRepo(trimmedUrl, language.getName(), trimmedBranch);
         urlCheckerService.checkAccessibility(trimmedUrl.replace(".git", ""));
         Inspection inspection = inspectionsRepository.createInspection(gitRepo);
         inspectionService.inspectCode(inspection.getInspectionId());

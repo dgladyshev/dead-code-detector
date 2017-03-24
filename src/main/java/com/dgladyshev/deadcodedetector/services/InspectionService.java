@@ -49,7 +49,7 @@ public class InspectionService {
         String inspectionDirPath = dataDir + "/" + id;
         try {
             inspection.changeState(InspectionState.DOWNLOADING);
-            gitService.downloadRepo(gitRepo, inspectionDirPath, "master"); //TODO add ability to switch branch
+            gitService.downloadRepo(gitRepo, inspectionDirPath); //TODO add ability to switch branch
             inspection.changeState(InspectionState.IN_QUEUE);
             executor.submit(() -> {
                 try {
@@ -70,6 +70,7 @@ public class InspectionService {
         }
     }
 
+    //TODO add javadoc
     //Example: und -db ./db.udb create -languages Java add ./dead-code-detector settings analyze
     public void analyzeRepo(String inspectionDirPath, String repoName, String repoLanguage) throws IOException {
         CommandLineUtils.execProcess(
@@ -81,6 +82,7 @@ public class InspectionService {
         );
     }
 
+    //TODO add javadoc
     //Example: und uperl ./unused.pl -db ./db.udb > results.txt
     public List<DeadCodeOccurence> findDeadCodeOccurences(String inspectionDirPath) throws IOException {
         String outputString = CommandLineUtils.execProcess(
@@ -91,6 +93,7 @@ public class InspectionService {
         return toDeadCodeOccurences(outputString, getCanonicalPath(inspectionDirPath));
     }
 
+    //TODO add javadoc
     private List<DeadCodeOccurence> toDeadCodeOccurences(String outputString, String inspectionCanonicalPath) {
         String[] lines = outputString.split("\\r?\\n");
         return Stream.of(lines)
