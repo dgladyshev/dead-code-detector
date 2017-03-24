@@ -1,4 +1,4 @@
-package com.dgladyshev.deadcodedetector.util;
+package com.dgladyshev.deadcodedetector.services;
 
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRepositoryUrl;
 import lombok.extern.slf4j.Slf4j;

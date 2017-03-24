@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
-import com.dgladyshev.deadcodedetector.util.UrlCheckerService;
+import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import java.util.HashMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,7 +76,6 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        //TODO improve
         when(inspectionService.createInspection(any())).thenReturn(
                 TEST_INSPECTION
         );
