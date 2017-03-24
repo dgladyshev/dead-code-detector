@@ -3,7 +3,6 @@ package com.dgladyshev.deadcodedetector;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -14,7 +13,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableScheduling
 @EnableSwagger2
-@EnableAutoConfiguration(exclude = ErrorMvcAutoConfiguration.class)
+@EnableAutoConfiguration
 @EnableAsync
 public class Application {
 
