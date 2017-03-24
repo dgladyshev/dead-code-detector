@@ -1,7 +1,6 @@
 package com.dgladyshev.deadcodedetector.entity;
 
 import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,7 +37,9 @@ public class Inspection {
                 break;
             case COMPLETED:
                 this.setTimestampAnalysisFinished(System.currentTimeMillis());
-                this.setTimeSpentAnalyzingMillis(this.getTimestampAnalysisFinished() - this.getTimestampAnalysisStart());
+                this.setTimeSpentAnalyzingMillis(
+                        this.getTimestampAnalysisFinished() - this.getTimestampAnalysisStart()
+                );
                 this.setStateDescription("Processing completed");
                 break;
             case FAILED:

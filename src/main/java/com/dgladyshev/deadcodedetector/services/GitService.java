@@ -33,7 +33,8 @@ public class GitService {
         File dirToDelete = new File(repoPath + "/.git");
         FileUtils.deleteDirectory(dirToDelete);
         File repoDir = new File(repoPath);
-        if (repoDir.isDirectory() && repoDir.list().length == 0) {
+        String[] elementsInRepoDir = repoDir.list();
+        if (repoDir.isDirectory() && elementsInRepoDir != null && elementsInRepoDir.length == 0) {
             throw new NoSuchGitBranchException(
                     String.format("There is no such branch as: %s. Repository URL: %s", branch, url)
             );
