@@ -27,7 +27,7 @@ ADD . /dead-code-detector
 WORKDIR /dead-code-detector
 
 ENV MEMORY 512
-
+gra
 EXPOSE 8080
 
 RUN ./gradlew clean build

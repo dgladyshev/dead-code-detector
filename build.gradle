@@ -70,7 +70,6 @@ targetCompatibility = 1.8
 
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-web:1.4.1.RELEASE")
-    testCompile("org.springframework.boot:spring-boot-starter-test")
     compile 'io.springfox:springfox-swagger2:+'
     compile 'io.springfox:springfox-swagger-ui:2.1.2'
     compile 'net.logstash.logback:logstash-logback-encoder:4.4'
@@ -78,12 +77,12 @@ dependencies {
     compile "org.projectlombok:lombok:1.16.2"
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.6.1.201703071140-r'
     compile group: 'org.buildobjects', name: 'jproc', version: '2.2.1'
-    //test
-    compile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3' //needs to be above junit dependency in order to avoid conflict
-    compile group: 'com.tngtech.java', name: 'junit-dataprovider', version: '1.12.0'
-    compile group: 'org.springframework', name: 'spring-test', version: '4.3.2.RELEASE'
+    compile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3' //needs to be above junit dependency
     compile 'org.unitils:unitils-core:3.4.2'
-    compile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: '1.12.0'
+    testCompile group: 'org.springframework', name: 'spring-test', version: '4.3.2.RELEASE'
+    testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
 }
 
 task wrapper(type: Wrapper) {
