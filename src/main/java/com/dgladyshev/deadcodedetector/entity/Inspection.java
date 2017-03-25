@@ -20,7 +20,7 @@ public class Inspection {
     private Long timestampAnalysisFinished;
     private Long timestampAnalysisStart;
     private Long timeSpentAnalyzingMillis;
-    private List<DeadCodeOccurence> deadCodeOccurrences;
+    private List<DeadCodeOccurrence> deadCodeOccurrences;
 
     public void changeState(InspectionState state) {
         this.setState(state);
@@ -56,7 +56,7 @@ public class Inspection {
         );
     }
 
-    public void complete(List<DeadCodeOccurence> deadCodeOccurrences) {
+    public void complete(List<DeadCodeOccurrence> deadCodeOccurrences) {
         this.setDeadCodeOccurrences(deadCodeOccurrences);
         changeState(InspectionState.COMPLETED);
     }

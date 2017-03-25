@@ -7,7 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 @Builder
-public class DeadCodeOccurence {
+public class DeadCodeOccurrence {
 
     private String type;
     private String name;
