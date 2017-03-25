@@ -1,6 +1,6 @@
 package com.dgladyshev.deadcodedetector.services;
 
-import com.dgladyshev.deadcodedetector.exceptions.MalformedRepositoryUrl;
+import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ public class UrlCheckerService {
     @Autowired
     private RestTemplate restTemplate;
 
-    public void checkAccessibility(String url) throws MalformedRepositoryUrl {
+    public void checkAccessibility(String url) throws MalformedRequestException {
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             if (response.getStatusCode().is2xxSuccessful()) {
@@ -24,7 +24,7 @@ public class UrlCheckerService {
         } catch (RestClientException e) {
             log.error("Exception occurred while checking accessibility of given URL. Error: {}", e);
         }
-        throw new MalformedRepositoryUrl("Required URL is not accessible");
+        throw new MalformedRequestException("Required URL is not accessible");
     }
 
 }

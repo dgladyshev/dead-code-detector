@@ -8,7 +8,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-import com.dgladyshev.deadcodedetector.exceptions.MalformedRepositoryUrl;
+import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class GitHubRepositoryNameTest {
         )));
     }
 
-    @Test(expected = MalformedRepositoryUrl.class)
+    @Test(expected = MalformedRequestException.class)
     @DataProvider(value = {
             "gopher://gopher.floodgap.com",
             "https//github.com/jenkinsci/jenkins",

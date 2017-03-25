@@ -2,7 +2,7 @@ package com.dgladyshev.deadcodedetector.util;
 
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
-import com.dgladyshev.deadcodedetector.exceptions.MalformedRepositoryUrl;
+import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,7 +64,7 @@ public class GitHubRepositoryName {
             }
         }
         log.warn("Could not match URL {}", url);
-        throw new MalformedRepositoryUrl("The specified URL is not in format of git repository");
+        throw new MalformedRequestException("The specified URL is not in format of git repository");
     }
 
 

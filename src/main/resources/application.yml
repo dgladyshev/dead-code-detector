@@ -10,8 +10,25 @@ endpoints:
   shutdown:
     enabled: false
 
-data.dir: ./data
-scitools.dir: /Users/dgladyshev/scitools/bin/macosx
 max.stored.inspections: 100000
 
+---
+spring:
+    profiles: local
+
+data.dir: ./data
+scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set to you local scitools path
+
+---
+spring:
+    profiles: test
+data.dir: /data
+scitools.dir: /scitools/bin/linux64
+
+---
+spring:
+    profiles: dev
+
+data.dir: /data
+scitools.dir: /scitools/bin/linux64
 

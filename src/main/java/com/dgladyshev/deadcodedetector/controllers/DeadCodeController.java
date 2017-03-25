@@ -43,7 +43,7 @@ public class DeadCodeController {
     public Inspection addInspection(@RequestParam String url,
                                     @RequestParam SupportedLanguages language,
                                     @RequestParam(defaultValue = "master") String branch) {
-        log.info("Incoming request for analysis, url: {}, language: {}", url, language);
+        log.info("Incoming request for analysis, url: {}, language: {}, branch: {}", url, language, branch);
         GitRepo gitRepo = new GitRepo(url, language.getName(), branch);
         urlCheckerService.checkAccessibility(
                 gitRepo.getUrl().replace(".git", "")

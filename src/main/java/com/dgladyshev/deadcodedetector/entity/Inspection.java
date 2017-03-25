@@ -48,6 +48,12 @@ public class Inspection {
             default:
                 break;
         }
+        log.info(
+                "Inspection id: {}. State: {}. Description: {}",
+                this.getInspectionId(),
+                this.getState(),
+                this.getStateDescription()
+        );
     }
 
     public void complete(List<DeadCodeOccurence> deadCodeOccurrences) {
