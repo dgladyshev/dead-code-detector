@@ -12,7 +12,11 @@ import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import java.util.HashMap;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +27,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
+import org.unitils.reflectionassert.ReflectionAssert;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -32,10 +38,12 @@ import org.springframework.web.client.RestTemplate;
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class DeadCodeControllerTest {
 
-    private static final Inspection TEST_INSPECTION = Inspection
+    private static final Inspection EXPECTED_INSPECTION = Inspection
             .builder()
             .inspectionId("someId")
             .build();
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     private MockMvc mockMvc;
@@ -55,22 +63,30 @@ public class DeadCodeControllerTest {
     @Test
     public void testGetInspections() throws Exception {
         HashMap<String, Inspection> map = new HashMap<>();
-        map.put(TEST_INSPECTION.getInspectionId(), TEST_INSPECTION);
+        map.put(EXPECTED_INSPECTION.getInspectionId(), EXPECTED_INSPECTION);
         given(inspectionsRepository.getInspections()).willReturn(map);
-        this.mockMvc.perform(get("/api/v1/inspections")
-                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        ResultActions result = this.mockMvc
+                .perform(get("/api/v1/inspections")
+                                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
-        //TODO check returned data as well
+        ReflectionAssert.assertReflectionEquals(
+                Lists.newArrayList(EXPECTED_INSPECTION),
+                toInspections(result)
+        );
     }
 
     @Test
     public void testGetInspectionById() throws Exception {
-        given(inspectionsRepository.getInspection(TEST_INSPECTION.getInspectionId()))
-                .willReturn(TEST_INSPECTION);
-        this.mockMvc.perform(get("/api/v1/inspections/" + TEST_INSPECTION.getInspectionId())
-                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        String inspectionId = EXPECTED_INSPECTION.getInspectionId();
+        given(inspectionsRepository.getInspection(inspectionId)).willReturn(EXPECTED_INSPECTION);
+        ResultActions result = this.mockMvc
+                .perform(get("/api/v1/inspections/" + inspectionId)
+                                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
-        //TODO check returned data as well
+        ReflectionAssert.assertReflectionEquals(
+                EXPECTED_INSPECTION,
+                toInspection(result)
+        );
     }
 
     @Test
@@ -82,17 +98,28 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        when(inspectionsRepository.createInspection(any())).thenReturn(
-                TEST_INSPECTION
-        );
-        this.mockMvc.perform(post("/api/v1/inspections")
-                                     .param("url", "https://github.com/dgladyshev/dead-code-detector.git")
-                                     .param("language", "JAVA")
-                                     .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+        when(inspectionsRepository.createInspection(any())).thenReturn(EXPECTED_INSPECTION);
+        ResultActions result = this.mockMvc.perform(post("/api/v1/inspections")
+                                                            .param("url",
+                                                                   "https://github.com/dgladyshev/dead-code-detector.git")
+                                                            .param("language", "JAVA")
+                                                            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+                                                            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
-        //TODO check returned data as well
+        ReflectionAssert.assertReflectionEquals(
+                EXPECTED_INSPECTION,
+                toInspection(result)
+        );
     }
 
+    private Inspection toInspection(ResultActions result) throws java.io.IOException {
+        String jsonString = result.andReturn().getResponse().getContentAsString();
+        return mapper.readValue(jsonString, Inspection.class);
+    }
+
+    private List<Inspection> toInspections(ResultActions result) throws java.io.IOException {
+        String jsonString = result.andReturn().getResponse().getContentAsString();
+        return mapper.readValue(jsonString, new TypeReference<List<Inspection>>(){});
+    }
 
 }
