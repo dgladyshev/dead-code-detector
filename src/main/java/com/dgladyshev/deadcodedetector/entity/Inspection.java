@@ -4,9 +4,11 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 @Builder
 @Slf4j
@@ -14,6 +16,8 @@ public class Inspection {
 
     private String inspectionId;
     private GitRepo gitRepo;
+    private String language;
+    private String branch;
     private InspectionState state;
     private String stateDescription;
     private Long timestampInspectionCreated;

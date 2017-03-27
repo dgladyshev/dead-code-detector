@@ -56,7 +56,7 @@ public class InspectionService {
         String inspectionDirPath = dataDir + "/" + id;
         try {
             inspection.changeState(InspectionState.DOWNLOADING);
-            gitService.downloadRepo(gitRepo, inspectionDirPath);
+            gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch());
             inspection.changeState(InspectionState.IN_QUEUE);
             executor.submit(() -> {
                 try {
@@ -64,7 +64,7 @@ public class InspectionService {
                     analyzeRepo(
                             inspectionDirPath,
                             gitRepo.getName(),
-                            gitRepo.getLanguage()
+                            inspection.getLanguage()
                     );
                     List<DeadCodeOccurrence> deadCodeOccurrences = findDeadCodeOccurrences(inspectionDirPath);
                     inspection.complete(deadCodeOccurrences);

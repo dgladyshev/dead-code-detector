@@ -19,16 +19,18 @@ public class GitService {
     /**
      * Downloads any public git repository to given path.
      *
-     * @param gitRepo          GitRepo entity which contains git url, branch and other related information
-     * @param inspectionDirPath path to the inspection directory in which subdirectory with repository should be created
+     * @param gitRepo           GitRepo entity which contains git url and other related information
+     * @param inspectionDirPath path to the inspection directory in which subdirectory with repository should be
+     *                          created
+     * @param branch            git branch which needs to be cloned
      *
-     * @throws IOException          if input/output exceptions occur
-     * @throws GitAPIException      if fails to download repository
+     * @throws IOException              if input/output exceptions occur
+     * @throws GitAPIException          if fails to download repository
      * @throws NoSuchGitBranchException if there is no specified branch in the repository
      */
-    public void downloadRepo(GitRepo gitRepo, String inspectionDirPath) throws GitAPIException, IOException {
+    public void downloadRepo(GitRepo gitRepo, String inspectionDirPath, String branch) throws GitAPIException,
+                                                                                              IOException {
         String repoPath = inspectionDirPath + "/" + gitRepo.getName();
-        String branch = gitRepo.getBranch();
         String url = gitRepo.getUrl();
         try {
             cloneRepo(url, repoPath, branch);

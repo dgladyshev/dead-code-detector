@@ -10,6 +10,8 @@ endpoints:
   shutdown:
     enabled: false
 
+max.stored.repositories: 100000
+
 ---
 spring:
     profiles: local

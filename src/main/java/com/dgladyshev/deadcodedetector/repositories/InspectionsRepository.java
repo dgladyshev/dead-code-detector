@@ -1,9 +1,12 @@
 package com.dgladyshev.deadcodedetector.repositories;
 
+import static org.apache.commons.lang.StringUtils.trimToEmpty;
+
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.InspectionState;
 import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
+import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
+import org.eclipse.jgit.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +30,9 @@ public class InspectionsRepository {
     @Value("${data.dir}")
     private String dataDir;
 
+    @Autowired
+    GitRepositoriesRepository gitRepositoriesRepository;
+
     private final Map<String, Inspection> inspections = Collections.synchronizedMap(
             new LinkedHashMap<String, Inspection>() {
                 @Override
@@ -34,8 +42,9 @@ public class InspectionsRepository {
             }
     );
 
-    public Inspection createInspection(GitRepo repo) {
+    public Inspection createInspection(GitRepo repo, String branch, String language) {
         String id = java.util.UUID.randomUUID().toString();
+        checkBranch(branch);
         inspections.put(
                 id,
                 Inspection.builder()
@@ -43,10 +52,20 @@ public class InspectionsRepository {
                         .gitRepo(repo)
                         .timestampInspectionCreated(System.currentTimeMillis())
                         .state(InspectionState.ADDED)
+                        .language(language)
+                        .branch(trimToEmpty(branch))
                         .build()
         );
+        gitRepositoriesRepository.addInspection(repo, id);
         log.info("Exception with id: {} has been created", id);
         return inspections.get(id);
+    }
+
+
+    private void checkBranch(String branch) throws MalformedRequestException {
+        if (StringUtils.isEmptyOrNull(trimToEmpty(branch))) {
+            throw new MalformedRequestException("Branch name is empty");
+        }
     }
 
     public Map<String, Inspection> getInspections() {
@@ -77,7 +96,7 @@ public class InspectionsRepository {
                     throw new InspectionIsLockedException("Cannot delete inspection while it is not yet completed");
             }
             inspections.remove(id);
-            log.info("Exception with id: {} has been deleted", id);
+            log.info("Inspection with id: {} has been deleted", id);
         } else {
             throw new NoSuchInspectionException("Cannot delete inspection because there is none with such id");
         }
