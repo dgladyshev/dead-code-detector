@@ -1,6 +1,7 @@
 package com.dgladyshev.deadcodedetector.entity;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class Inspection {
     private Long timestampAnalysisFinished;
     private Long timestampAnalysisStart;
     private Long timeSpentAnalyzingMillis;
+    private List<String> deadCodeTypesFound;
     private List<DeadCodeOccurrence> deadCodeOccurrences;
 
     public void changeState(InspectionState state) {
@@ -62,6 +64,14 @@ public class Inspection {
 
     public void complete(List<DeadCodeOccurrence> deadCodeOccurrences) {
         this.setDeadCodeOccurrences(deadCodeOccurrences);
+        this.setDeadCodeTypesFound(
+                deadCodeOccurrences
+                        .stream()
+                        .map(DeadCodeOccurrence::getType)
+                        .distinct()
+                        .sorted(String::compareTo)
+                        .collect(Collectors.toList())
+        );
         changeState(InspectionState.COMPLETED);
     }
 
