@@ -13,6 +13,7 @@ public class DeadCodeOccurrence {
     private String name;
     private String file;
     private String line;
+    private String column;
 
 }
 

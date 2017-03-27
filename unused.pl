@@ -246,7 +246,7 @@ sub reportUnusedByKind {
 	my $thiskind = $ref->scope()->kindname();
 	print ($thiskind);
 	print ($delimiter);
-	print $ref->scope()->longname().$delimiter.$ref->file()->longname().$delimiter, $ref->line();
+	print $ref->scope()->longname().$delimiter.$ref->file()->longname().$delimiter, $ref->line().$delimiter, $ref->column();
 	my @endref = $ref->scope()->refs("end");
 	print "\n";
     }

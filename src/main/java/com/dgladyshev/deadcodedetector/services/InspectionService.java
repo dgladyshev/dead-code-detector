@@ -129,12 +129,13 @@ public class InspectionService {
                 .map(line -> {
                     String[] elements = line.split("&");
                     if (!StringUtils.isEmptyOrNull(line) && elements.length > 3) {
-                        return new DeadCodeOccurrence(
-                                elements[0],
-                                elements[1],
-                                elements[2].replace(inspectionCanonicalPath + "/", ""),
-                                elements[3]
-                        );
+                        return DeadCodeOccurrence.builder()
+                                .type(elements[0])
+                                .name(elements[1])
+                                .file(elements[2].replace(inspectionCanonicalPath + "/", ""))
+                                .line(elements[3])
+                                .column(elements[4])
+                        .build();
                     } else {
                         return null;
                     }
