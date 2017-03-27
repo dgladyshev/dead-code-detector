@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -80,5 +81,26 @@ public class Inspection {
         this.setStateDescription(ex.getMessage());
         changeState(InspectionState.FAILED);
     }
+
+    //returns filtered representation of inspection
+    //warning: method creates new instance of inspection class
+    public Inspection toFilteredInspection(String filter) {
+        if (this.getDeadCodeOccurrences() != null) {
+            List<DeadCodeOccurrence> filteredOccurrences = this.getDeadCodeOccurrences()
+                    .stream()
+                    .filter(occurrence -> {
+                        String type = occurrence.getType().toLowerCase();
+                        return type.contains(filter.toLowerCase());
+                    })
+                    .collect(Collectors.toList());
+            Inspection filteredInspection = BeanUtils.instantiateClass(Inspection.class);
+            BeanUtils.copyProperties(this, filteredInspection);
+            filteredInspection.setDeadCodeOccurrences(filteredOccurrences);
+            return filteredInspection;
+        } else {
+            return this;
+        }
+    }
+
 }
 
