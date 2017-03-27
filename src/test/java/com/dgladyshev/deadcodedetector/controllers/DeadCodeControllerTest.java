@@ -119,8 +119,7 @@ public class DeadCodeControllerTest {
 
     private List<Inspection> toInspections(ResultActions result) throws java.io.IOException {
         String jsonString = result.andReturn().getResponse().getContentAsString();
-        return mapper.readValue(jsonString, new TypeReference<List<Inspection>>() {
-        });
+        return mapper.readValue(jsonString, new TypeReference<List<Inspection>>() {});
     }
 
 }
