@@ -5,10 +5,12 @@ import static org.apache.commons.lang.StringUtils.trimToEmpty;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.SupportedLanguages;
+import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.dgladyshev.deadcodedetector.services.InspectionService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import java.util.Collection;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +68,7 @@ public class DeadCodeController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void refreshInspection(@RequestParam String url,
-                                        @RequestParam(defaultValue = "master") String branch) {
+                                  @RequestParam(defaultValue = "master") String branch) {
         log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
         GitRepo gitRepo = new GitRepo(url);
         Inspection inspection = inspectionsRepository.getRefreshableInspection(gitRepo, trimToEmpty(branch));
@@ -78,8 +80,23 @@ public class DeadCodeController {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Collection<Inspection> getInspections() {
-        return inspectionsRepository.getInspections().values();
+    public Collection<Inspection> getInspections(@RequestParam(required = false) Long pageNumber,
+                                                 @RequestParam(required = false) Long pageSize) {
+        if (pageNumber != null && pageSize != null) {
+            if (pageNumber < 1 || pageSize < 0) {
+                throw new MalformedRequestException("Page number must equal or bigger than 1,"
+                                                    + " page size must be bigger than 0");
+            } else {
+                return inspectionsRepository.getInspections()
+                        .values()
+                        .stream()
+                        .skip((pageNumber - 1) * pageSize)
+                        .limit(pageSize)
+                        .collect(Collectors.toList());
+            }
+        } else {
+            return inspectionsRepository.getInspections().values();
+        }
     }
 
     @RequestMapping(
