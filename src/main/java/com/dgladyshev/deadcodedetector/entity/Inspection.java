@@ -13,6 +13,7 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor
 @Data
 @Builder
+@SuppressWarnings("PMD.NullAssignment")
 @Slf4j
 public class Inspection {
 
@@ -29,10 +30,26 @@ public class Inspection {
     private List<String> deadCodeTypesFound;
     private List<DeadCodeOccurrence> deadCodeOccurrences;
 
+    public Inspection(String inspectionId, GitRepo gitRepo, String language, String branch) {
+        this.inspectionId = inspectionId;
+        this.gitRepo = gitRepo;
+        this.language = language;
+        this.branch = branch;
+    }
+
     public void changeState(InspectionState state) {
         this.setState(state);
         switch (state) {
+            case ADDED:
+                this.timestampInspectionCreated = System.currentTimeMillis();
+                this.setStateDescription("Inspection created");
+                break;
             case DOWNLOADING:
+                this.deadCodeOccurrences = null;
+                this.deadCodeTypesFound = null;
+                this.timeSpentAnalyzingMillis = null;
+                this.timestampAnalysisStart = null;
+                this.timestampAnalysisFinished = null;
                 this.setStateDescription("Downloading git repository");
                 break;
             case IN_QUEUE:

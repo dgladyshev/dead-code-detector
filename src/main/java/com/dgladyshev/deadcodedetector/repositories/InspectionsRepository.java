@@ -1,5 +1,6 @@
 package com.dgladyshev.deadcodedetector.repositories;
 
+import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
@@ -9,13 +10,12 @@ import com.dgladyshev.deadcodedetector.exceptions.InspectionAlreadyExistsExcepti
 import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
-import java.io.File;
-import java.io.IOException;
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +24,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class InspectionsRepository {
+
+    private static final Set<InspectionState> INSPECTION_COMPLETED_STATES = Sets.newHashSet(
+            InspectionState.COMPLETED,
+            InspectionState.FAILED
+    );
 
     @Value("${max.stored.inspections}")
     private int maxStoredInspections;
@@ -45,38 +50,35 @@ public class InspectionsRepository {
 
     public Inspection createInspection(GitRepo repo, String branch, String language) {
         checkBranch(branch);
-        checkNoSuchInspectionExist(repo, branch);
+        if (isInspectionExists(repo, branch)) {
+            throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "
+                                                       + "already been created. Use inspections/refresh endpoint or "
+                                                       + "choose another branch to inspect.");
+        }
         String id = java.util.UUID.randomUUID().toString();
-        inspections.put(
-                id,
-                Inspection.builder()
-                        .inspectionId(id)
-                        .gitRepo(repo)
-                        .timestampInspectionCreated(System.currentTimeMillis())
-                        .state(InspectionState.ADDED)
-                        .language(language)
-                        .branch(trimToEmpty(branch))
-                        .build()
-        );
+        Inspection inspection = new Inspection(id, repo, language, branch);
+        inspections.put(id, inspection);
+        inspection.changeState(InspectionState.ADDED);
         gitRepositoriesRepository.addInspection(repo, id);
         log.info("Exception with id: {} has been created", id);
         return inspections.get(id);
     }
 
-    private void checkNoSuchInspectionExist(GitRepo repo, String branch) {
-        if (
-                gitRepositoriesRepository.isRepositoryExist(repo)
-                && gitRepositoriesRepository.getRepositoryInspections(repo)
-                        .stream()
-                        .map(inspections::get)
-                        .map(Inspection::getBranch)
-                        .anyMatch(branch::equalsIgnoreCase)) {
-            throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "
-                                                       + "already been created. Use inspections/refresh endpoint or "
-                                                       + "choose another branch to inspect.");
-        }
+    public Inspection getRefreshableInspection(GitRepo repo, String branch) {
+        checkBranch(branch);
+        Inspection inspection = getInspection(repo, branch);
+        checkIfInspectionIsLocked(inspection.getInspectionId());
+        return inspection;
     }
 
+    private boolean isInspectionExists(GitRepo repo, String branch) {
+        return gitRepositoriesRepository.isRepositoryExist(repo)
+               && gitRepositoriesRepository.getRepositoryInspections(repo)
+                       .stream()
+                       .map(inspections::get)
+                       .map(Inspection::getBranch)
+                       .anyMatch(branch::equalsIgnoreCase);
+    }
 
     private void checkBranch(String branch) throws MalformedRequestException {
         if (StringUtils.isEmptyOrNull(trimToEmpty(branch))) {
@@ -96,21 +98,21 @@ public class InspectionsRepository {
         }
     }
 
+    //TODO add enpoint to this
+    private Inspection getInspection(GitRepo repo, String branch) {
+        return gitRepositoriesRepository.getRepositoryInspections(repo)
+                .stream()
+                .map(inspections::get)
+                .filter(inspection -> branch.equalsIgnoreCase(inspection.getBranch()))
+                .findAny()
+                .orElseThrow(() -> new NoSuchInspectionException("There is no inspection with specified"
+                                                                 + " url and branch."));
+    }
+
     public void deleteInspection(String id) throws NoSuchInspectionException, InspectionIsLockedException {
         if (id != null && inspections.containsKey(id)) {
-            InspectionState state = inspections.get(id).getState();
-            switch (state) {
-                case COMPLETED:
-                case FAILED:
-                    try {
-                        FileUtils.deleteDirectory(new File(dataDir + "/" + id));
-                    } catch (IOException e) {
-                        log.error("There is no files to delete for inspection with id {}", id);
-                    }
-                    break;
-                default:
-                    throw new InspectionIsLockedException("Cannot delete inspection while it is not yet completed");
-            }
+            checkIfInspectionIsLocked(id);
+            deleteDirectoryIfExists(dataDir + "/" + id);
             inspections.remove(id);
             log.info("Inspection with id: {} has been deleted", id);
         } else {
@@ -118,6 +120,12 @@ public class InspectionsRepository {
         }
     }
 
+    private void checkIfInspectionIsLocked(String id) {
+        InspectionState state = inspections.get(id).getState();
+        if (!INSPECTION_COMPLETED_STATES.contains(state)) {
+            throw new InspectionIsLockedException("Inspection is locked to any changes until it would be completed.");
+        }
+    }
 }
 
 

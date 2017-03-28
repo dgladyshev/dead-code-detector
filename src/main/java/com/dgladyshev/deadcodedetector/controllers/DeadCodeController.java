@@ -61,6 +61,19 @@ public class DeadCodeController {
     }
 
     @RequestMapping(
+            value = "/inspections/refresh",
+            method = RequestMethod.POST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public void refreshInspection(@RequestParam String url,
+                                        @RequestParam(defaultValue = "master") String branch) {
+        log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
+        GitRepo gitRepo = new GitRepo(url);
+        Inspection inspection = inspectionsRepository.getRefreshableInspection(gitRepo, trimToEmpty(branch));
+        inspectionService.inspectCode(inspection.getInspectionId());
+    }
+
+    @RequestMapping(
             value = "/inspections",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)

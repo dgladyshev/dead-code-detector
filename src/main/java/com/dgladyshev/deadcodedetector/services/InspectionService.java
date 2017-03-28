@@ -1,5 +1,7 @@
 package com.dgladyshev.deadcodedetector.services;
 
+import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
+
 import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurrence;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
@@ -65,6 +67,7 @@ public class InspectionService {
         Inspection inspection = inspectionsRepository.getInspection(id);
         GitRepo gitRepo = inspection.getGitRepo();
         String inspectionDirPath = dataDir + "/" + id;
+        deleteDirectoryIfExists(inspectionDirPath);
         try {
             inspection.changeState(InspectionState.DOWNLOADING);
             gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch());
