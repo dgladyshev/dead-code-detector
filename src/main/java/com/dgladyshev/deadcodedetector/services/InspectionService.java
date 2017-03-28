@@ -46,6 +46,9 @@ public class InspectionService {
     @Value("${data.dir}")
     private String dataDir;
 
+    @Value("${command.line.timeout}")
+    private long timeout;
+
     private final GitService gitService;
     private final InspectionsRepository inspectionsRepository;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -105,6 +108,7 @@ public class InspectionService {
             throws IOException, ExecProcessException {
         CommandLineUtils.execProcess(
                 getCanonicalPath(scitoolsDir + "/und"),
+                timeout,
                 "-db", getCanonicalPath(inspectionDirPath + "/db.udb"), "create",
                 "-languages", repoLanguage,
                 "add", getCanonicalPath(inspectionDirPath + "/" + repoName),
@@ -124,6 +128,7 @@ public class InspectionService {
             throws IOException, ExecProcessException {
         String sciptOutput = CommandLineUtils.execProcess(
                 getCanonicalPath(scitoolsDir + "/und"),
+                timeout,
                 "uperl", getCanonicalPath("./unused.pl"),
                 "-db", getCanonicalPath(inspectionDirPath + "/db.udb")
         );

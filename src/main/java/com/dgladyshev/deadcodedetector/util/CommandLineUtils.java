@@ -19,11 +19,11 @@ public final class CommandLineUtils {
      * @param args command arguments
      * @throws ExecProcessException if shell command failed to be executed or return non-zero error code
      */
-    public static String execProcess(String cmd, String... args) throws ExecProcessException {
+    public static String execProcess(String cmd, long timeoutMillis, String... args) throws ExecProcessException {
         try {
             return new ProcBuilder(cmd)
                     .withArgs(args)
-                    .withTimeoutMillis(15000)
+                    .withTimeoutMillis(timeoutMillis)
                     .withExpectedExitStatuses(0)
                     .run()
                     .getOutputString();
