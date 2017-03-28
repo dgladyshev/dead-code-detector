@@ -27,9 +27,10 @@ public final class CommandLineUtils {
                     .withExpectedExitStatuses(0)
                     .run()
                     .getOutputString();
-        } catch (StartupException | TimeoutException | ExternalProcessFailureException ex) {
-            log.error("Failed to exec command: {} with args: {} because of error: {}", cmd, args, ex);
+        } catch (StartupException | TimeoutException ex)  {
             throw new ExecProcessException("Failed to execute shell command", ex);
+        } catch (ExternalProcessFailureException ex) {
+            throw new ExecProcessException(ex.getStderr(), ex);
         }
     }
 }
