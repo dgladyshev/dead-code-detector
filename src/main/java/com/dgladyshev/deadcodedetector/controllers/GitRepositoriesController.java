@@ -38,7 +38,7 @@ public class GitRepositoriesController {
     @ResponseBody
     public Set<String> getRepositoryInspectionsIds(@RequestParam String url) {
         GitRepo gitRepo = new GitRepo(url);
-        return gitRepositoriesRepository.gitRepositoryInspections(gitRepo);
+        return gitRepositoriesRepository.getRepositoryInspections(gitRepo);
     }
 
     @RequestMapping(
@@ -48,7 +48,7 @@ public class GitRepositoriesController {
     @ResponseBody
     public List<Inspection> getRepositoryInspections(@RequestParam String url) {
         GitRepo gitRepo = new GitRepo(url);
-        return gitRepositoriesRepository.gitRepositoryInspections(gitRepo).stream()
+        return gitRepositoriesRepository.getRepositoryInspections(gitRepo).stream()
                 .map(id -> inspectionsRepository.getInspection(id))
                 .collect(Collectors.toList());
     }

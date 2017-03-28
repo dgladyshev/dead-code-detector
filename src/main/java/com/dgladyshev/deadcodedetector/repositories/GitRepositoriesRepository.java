@@ -41,12 +41,16 @@ public class GitRepositoriesRepository {
         return gitRepositories;
     }
 
-    public Set<String> gitRepositoryInspections(GitRepo gitRepo) throws NoSuchRepositoryException {
-        if (gitRepo != null && getRepositories().containsKey(gitRepo)) {
+    public Set<String> getRepositoryInspections(GitRepo gitRepo) throws NoSuchRepositoryException {
+        if (isRepositoryExist(gitRepo)) {
             return gitRepositories.get(gitRepo);
         } else {
             throw new NoSuchInspectionException("There is no record of such repository");
         }
+    }
+
+    public boolean isRepositoryExist(GitRepo gitRepo) {
+        return gitRepo != null && getRepositories().containsKey(gitRepo);
     }
 
 

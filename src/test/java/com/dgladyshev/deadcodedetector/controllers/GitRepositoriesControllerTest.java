@@ -56,7 +56,7 @@ public class GitRepositoriesControllerTest {
     @Test
     public void testGetInspectionsIds() throws Exception {
         HashSet<String> expectedResult = Sets.newHashSet(EXPECTED_INSPECTION.getInspectionId());
-        given(gitRepositoriesRepository.gitRepositoryInspections(any())).willReturn(expectedResult);
+        given(gitRepositoriesRepository.getRepositoryInspections(any())).willReturn(expectedResult);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections_ids")
                                  .param("url", REPOSITORY_URL)
@@ -77,7 +77,7 @@ public class GitRepositoriesControllerTest {
         String expectedInspectionId = EXPECTED_INSPECTION.getInspectionId();
         HashSet<String> expectedInspectionsIds = Sets.newHashSet(expectedInspectionId);
         List<Inspection> expectedResult = Lists.newArrayList(EXPECTED_INSPECTION);
-        given(gitRepositoriesRepository.gitRepositoryInspections(any())).willReturn(expectedInspectionsIds);
+        given(gitRepositoriesRepository.getRepositoryInspections(any())).willReturn(expectedInspectionsIds);
         given(inspectionsRepository.getInspection(expectedInspectionId)).willReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections")

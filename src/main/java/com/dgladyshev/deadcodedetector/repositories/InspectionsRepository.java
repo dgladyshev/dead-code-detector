@@ -5,6 +5,7 @@ import static org.apache.commons.lang.StringUtils.trimToEmpty;
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.InspectionState;
+import com.dgladyshev.deadcodedetector.exceptions.InspectionAlreadyExistsException;
 import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
@@ -31,7 +32,7 @@ public class InspectionsRepository {
     private String dataDir;
 
     @Autowired
-    GitRepositoriesRepository gitRepositoriesRepository;
+    private GitRepositoriesRepository gitRepositoriesRepository;
 
     private final Map<String, Inspection> inspections = Collections.synchronizedMap(
             new LinkedHashMap<String, Inspection>() {
@@ -43,8 +44,9 @@ public class InspectionsRepository {
     );
 
     public Inspection createInspection(GitRepo repo, String branch, String language) {
-        String id = java.util.UUID.randomUUID().toString();
         checkBranch(branch);
+        checkNoSuchInspectionExist(repo, branch);
+        String id = java.util.UUID.randomUUID().toString();
         inspections.put(
                 id,
                 Inspection.builder()
@@ -59,6 +61,20 @@ public class InspectionsRepository {
         gitRepositoriesRepository.addInspection(repo, id);
         log.info("Exception with id: {} has been created", id);
         return inspections.get(id);
+    }
+
+    private void checkNoSuchInspectionExist(GitRepo repo, String branch) {
+        if (
+                gitRepositoriesRepository.isRepositoryExist(repo)
+                && gitRepositoriesRepository.getRepositoryInspections(repo)
+                        .stream()
+                        .map(inspections::get)
+                        .map(Inspection::getBranch)
+                        .anyMatch(branch::equalsIgnoreCase)) {
+            throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "
+                                                       + "already been created. Use inspections/refresh endpoint or "
+                                                       + "choose another branch to inspect.");
+        }
     }
 
 
