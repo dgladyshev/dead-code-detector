@@ -7,10 +7,12 @@ import com.dgladyshev.deadcodedetector.entity.InspectionState;
 import com.dgladyshev.deadcodedetector.exceptions.ExecProcessException;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -26,6 +28,15 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class InspectionService {
+
+    private static final Set<String> ALLOWED_INSPECTION_TYPES = Sets.newHashSet(
+            "Parameter",
+            "Private Method",
+            "Private Static Generic Method",
+            "Private Static Method",
+            "Variable",
+            "Private Variable"
+    );
 
     @Value("${scitools.dir}")
     private String scitoolsDir;
@@ -128,14 +139,21 @@ public class InspectionService {
         return Stream.of(lines)
                 .map(line -> {
                     String[] elements = line.split("&");
-                    if (!StringUtils.isEmptyOrNull(line) && elements.length > 3) {
+                    //Note: SciTools can't process lambda correctly and generate false positives
+                    //It also produces non-existent occurrence for "valueOf" method in enums
+                    if (
+                            !StringUtils.isEmptyOrNull(line)
+                            && elements.length > 3
+                            && ALLOWED_INSPECTION_TYPES.contains(elements[0])
+                            && !elements[1].contains("lambda")
+                            && !elements[1].contains(".valueOf.s")) {
                         return DeadCodeOccurrence.builder()
                                 .type(elements[0])
                                 .name(elements[1])
                                 .file(elements[2].replace(inspectionCanonicalPath + "/", ""))
                                 .line(elements[3])
                                 .column(elements[4])
-                        .build();
+                                .build();
                     } else {
                         return null;
                     }
