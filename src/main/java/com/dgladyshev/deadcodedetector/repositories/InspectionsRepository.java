@@ -113,6 +113,11 @@ public class InspectionsRepository {
         if (id != null && inspections.containsKey(id)) {
             checkIfInspectionIsLocked(id);
             deleteDirectoryIfExists(dataDir + "/" + id);
+            Inspection inspection = inspections.get(id);
+            Set<String>
+                    repositoryInspections =
+                    gitRepositoriesRepository.getRepositoryInspections(inspection.getGitRepo());
+            repositoryInspections.remove(id);
             inspections.remove(id);
             log.info("Inspection with id: {} has been deleted", id);
         } else {
