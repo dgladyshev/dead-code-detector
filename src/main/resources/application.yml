@@ -11,7 +11,7 @@ endpoints:
     enabled: false
 
 max.stored.repositories: 100000
-command.line.timeout: 120000
+command.line.timeout: 12000000
 
 ---
 spring:

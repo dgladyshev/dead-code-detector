@@ -26,7 +26,7 @@ ADD . /dead-code-detector
 
 WORKDIR /dead-code-detector
 
-ENV MEMORY 512
+ENV MEMORY 800
 
 EXPOSE 8080
 
