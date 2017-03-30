@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
-import com.dgladyshev.deadcodedetector.services.InspectionService;
+import com.dgladyshev.deadcodedetector.services.InspectionsService;
+import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,10 +49,10 @@ public class DeadCodeControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private InspectionService inspectionService;
+    private CodeAnalyzerService codeAnalyzerService;
 
     @MockBean
-    private InspectionsRepository inspectionsRepository;
+    private InspectionsService inspectionsService;
 
     @MockBean
     private UrlCheckerService urlCheckerService;
@@ -63,8 +63,8 @@ public class DeadCodeControllerTest {
     @Test
     public void testGetInspections() throws Exception {
         HashMap<String, Inspection> map = new HashMap<>();
-        map.put(EXPECTED_INSPECTION.getInspectionId(), EXPECTED_INSPECTION);
-        given(inspectionsRepository.getInspections()).willReturn(map);
+        map.put(EXPECTED_INSPECTION.getId(), EXPECTED_INSPECTION);
+        given(inspectionsService.getInspections()).willReturn(map);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/inspections")
                                  .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -77,8 +77,8 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testGetInspectionById() throws Exception {
-        String inspectionId = EXPECTED_INSPECTION.getInspectionId();
-        given(inspectionsRepository.getInspection(inspectionId)).willReturn(EXPECTED_INSPECTION);
+        String inspectionId = EXPECTED_INSPECTION.getId();
+        given(inspectionsService.getInspection(inspectionId)).willReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/inspections/" + inspectionId)
                                  .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -98,7 +98,7 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        when(inspectionsRepository.createInspection(any(), any() ,any())).thenReturn(EXPECTED_INSPECTION);
+        when(inspectionsService.createInspection(any(), any() , any())).thenReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc.perform(post("/api/v1/inspections")
                                                             .param("url",
                                                                    "https://github.com/dgladyshev/dead-code-detector.git")

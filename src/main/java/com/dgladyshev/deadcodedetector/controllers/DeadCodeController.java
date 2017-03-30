@@ -6,11 +6,10 @@ import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.entity.SupportedLanguages;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
-import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
-import com.dgladyshev.deadcodedetector.services.InspectionService;
+import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
+import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import java.util.Collection;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,16 +26,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/")
 public class DeadCodeController {
 
-    private final InspectionService inspectionService;
-    private final InspectionsRepository inspectionsRepository;
+    private final CodeAnalyzerService codeAnalyzerService;
+    private final InspectionsService inspectionsService;
     private final UrlCheckerService urlCheckerService;
 
     @Autowired
-    public DeadCodeController(InspectionService inspectionService,
-                              InspectionsRepository inspectionsRepository,
+    public DeadCodeController(CodeAnalyzerService codeAnalyzerService,
+                              InspectionsService inspectionsService,
                               UrlCheckerService urlCheckerService) {
-        this.inspectionService = inspectionService;
-        this.inspectionsRepository = inspectionsRepository;
+        this.codeAnalyzerService = codeAnalyzerService;
+        this.inspectionsService = inspectionsService;
         this.urlCheckerService = urlCheckerService;
     }
 
@@ -51,14 +50,15 @@ public class DeadCodeController {
         log.info("Incoming request for analysis, url: {}, language: {}, branch: {}", url, language, branch);
         GitRepo gitRepo = new GitRepo(url);
         urlCheckerService.checkAccessibility(
-                gitRepo.getUrl().replace(".git", "")
+                trimToEmpty(url).replace(".git", "")
         );
-        Inspection inspection = inspectionsRepository.createInspection(
+        Inspection inspection = inspectionsService.createInspection(
                 gitRepo,
                 trimToEmpty(branch),
-                language.getName()
+                language.getName(),
+                trimToEmpty(url)
         );
-        inspectionService.inspectCode(inspection.getInspectionId());
+        codeAnalyzerService.inspectCode(inspection.getId());
         return inspection;
     }
 
@@ -71,8 +71,8 @@ public class DeadCodeController {
                                   @RequestParam(defaultValue = "master") String branch) {
         log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
         GitRepo gitRepo = new GitRepo(url);
-        Inspection inspection = inspectionsRepository.getRefreshableInspection(gitRepo, trimToEmpty(branch));
-        inspectionService.inspectCode(inspection.getInspectionId());
+        Inspection inspection = inspectionsService.getRefreshableInspection(gitRepo, trimToEmpty(branch));
+        codeAnalyzerService.inspectCode(inspection.getId());
     }
 
     @RequestMapping(
@@ -80,22 +80,17 @@ public class DeadCodeController {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Collection<Inspection> getInspections(@RequestParam(required = false) Long pageNumber,
-                                                 @RequestParam(required = false) Long pageSize) {
+    public Collection<Inspection> getInspections(@RequestParam(required = false) Integer pageNumber,
+                                                 @RequestParam(required = false) Integer pageSize) {
         if (pageNumber != null && pageSize != null) {
             if (pageNumber < 1 || pageSize < 0) {
                 throw new MalformedRequestException("Page number must equal or bigger than 1,"
                                                     + " page size must be bigger than 0");
             } else {
-                return inspectionsRepository.getInspections()
-                        .values()
-                        .stream()
-                        .skip((pageNumber - 1) * pageSize)
-                        .limit(pageSize)
-                        .collect(Collectors.toList());
+                return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
             }
         } else {
-            return inspectionsRepository.getInspections().values();
+            return inspectionsService.getInspections();
         }
     }
 
@@ -104,9 +99,9 @@ public class DeadCodeController {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Inspection getInspectionById(@PathVariable String id,
+    public Inspection getInspectionById(@PathVariable Long id,
                                         @RequestParam(defaultValue = "", required = false) String filter) {
-        Inspection inspection = inspectionsRepository.getInspection(id);
+        Inspection inspection = inspectionsService.getInspection(id);
         return (StringUtils.isEmptyOrNull(filter))
                ? inspection
                : inspection.toFilteredInspection(filter);
@@ -117,8 +112,8 @@ public class DeadCodeController {
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public void deleteInspectionById(@PathVariable String id) {
-        inspectionsRepository.deleteInspection(id);
+    public void deleteInspectionById(@PathVariable Long id) {
+        inspectionsService.deleteInspection(id);
     }
 
 }

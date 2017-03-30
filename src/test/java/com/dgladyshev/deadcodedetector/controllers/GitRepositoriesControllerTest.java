@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.dgladyshev.deadcodedetector.entity.Inspection;
 import com.dgladyshev.deadcodedetector.repositories.GitRepositoriesRepository;
-import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
+import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
@@ -48,14 +48,14 @@ public class GitRepositoriesControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private InspectionsRepository inspectionsRepository;
+    private InspectionsService inspectionsService;
 
     @MockBean
     private GitRepositoriesRepository gitRepositoriesRepository;
 
     @Test
     public void testGetInspectionsIds() throws Exception {
-        HashSet<String> expectedResult = Sets.newHashSet(EXPECTED_INSPECTION.getInspectionId());
+        HashSet<String> expectedResult = Sets.newHashSet(EXPECTED_INSPECTION.getId());
         given(gitRepositoriesRepository.getRepositoryInspections(any())).willReturn(expectedResult);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections_ids")
@@ -74,11 +74,11 @@ public class GitRepositoriesControllerTest {
 
     @Test
     public void testGetInspections() throws Exception {
-        String expectedInspectionId = EXPECTED_INSPECTION.getInspectionId();
+        String expectedInspectionId = EXPECTED_INSPECTION.getId();
         HashSet<String> expectedInspectionsIds = Sets.newHashSet(expectedInspectionId);
         List<Inspection> expectedResult = Lists.newArrayList(EXPECTED_INSPECTION);
         given(gitRepositoriesRepository.getRepositoryInspections(any())).willReturn(expectedInspectionsIds);
-        given(inspectionsRepository.getInspection(expectedInspectionId)).willReturn(EXPECTED_INSPECTION);
+        given(inspectionsService.getInspection(expectedInspectionId)).willReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections")
                                  .param("url", REPOSITORY_URL)

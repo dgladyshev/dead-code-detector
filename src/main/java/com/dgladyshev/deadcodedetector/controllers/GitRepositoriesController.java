@@ -2,8 +2,7 @@ package com.dgladyshev.deadcodedetector.controllers;
 
 import com.dgladyshev.deadcodedetector.entity.GitRepo;
 import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.repositories.GitRepositoriesRepository;
-import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
+import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,14 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/")
 public class GitRepositoriesController {
 
-    private final GitRepositoriesRepository gitRepositoriesRepository;
-    private final InspectionsRepository inspectionsRepository;
+    private final InspectionsService inspectionsService;
 
     @Autowired
-    public GitRepositoriesController(GitRepositoriesRepository gitRepositoriesRepository,
-                                     InspectionsRepository inspectionsRepository) {
-        this.gitRepositoriesRepository = gitRepositoriesRepository;
-        this.inspectionsRepository = inspectionsRepository;
+    public GitRepositoriesController(InspectionsService inspectionsService) {
+        this.inspectionsService = inspectionsService;
     }
 
     @RequestMapping(
@@ -36,9 +32,12 @@ public class GitRepositoriesController {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Set<String> getRepositoryInspectionsIds(@RequestParam String url) {
+    public Set<Long> getRepositoryInspectionsIds(@RequestParam String url) {
         GitRepo gitRepo = new GitRepo(url);
-        return gitRepositoriesRepository.getRepositoryInspections(gitRepo);
+        return inspectionsService.getRepositoryInspections(gitRepo)
+                .stream()
+                .map(Inspection::getId)
+                .collect(Collectors.toSet());
     }
 
     @RequestMapping(
@@ -48,9 +47,7 @@ public class GitRepositoriesController {
     @ResponseBody
     public List<Inspection> getRepositoryInspections(@RequestParam String url) {
         GitRepo gitRepo = new GitRepo(url);
-        return gitRepositoriesRepository.getRepositoryInspections(gitRepo).stream()
-                .map(id -> inspectionsRepository.getInspection(id))
-                .collect(Collectors.toList());
+        return inspectionsService.getRepositoryInspections(gitRepo);
     }
 
 

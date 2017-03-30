@@ -1,8 +1,7 @@
 package com.dgladyshev.deadcodedetector.entity;
 
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
-
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,22 +13,19 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class GitRepo {
+public class GitRepo implements Serializable {
 
     private String name;
     private String user;
     private String host;
-    private String url;
 
     public GitRepo(String url) {
         GitHubRepositoryName parsedUrl = GitHubRepositoryName.create(url);
         this.name = parsedUrl.getRepositoryName();
         this.user = parsedUrl.getUserName();
         this.host = parsedUrl.getHost();
-        this.url = trimToEmpty(url);
     }
 
-    //Note: the "url" field has not been used in equals method
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
