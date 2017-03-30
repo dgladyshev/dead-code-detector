@@ -2,6 +2,7 @@ package com.dgladyshev.deadcodedetector.entity;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -10,6 +11,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,6 +38,8 @@ public class Inspection {
     private String branch;
     @Enumerated(EnumType.STRING)
     private InspectionState state;
+    @Lob
+    @Column(length = 1000)
     private String stateDescription;
     private Long timestampInspectionCreated;
     private Long timestampAnalysisFinished;
