@@ -88,7 +88,7 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testDeleteInspectionById() throws Exception {
-        this.mockMvc.perform(delete("/api/v1/inspections/someId")
+        this.mockMvc.perform(delete("/api/v1/inspections/" + EXPECTED_INSPECTION.getId())
                                      .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
     }
