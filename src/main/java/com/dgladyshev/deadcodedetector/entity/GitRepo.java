@@ -1,19 +1,18 @@
 package com.dgladyshev.deadcodedetector.entity;
 
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
-import java.io.Serializable;
+import javax.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-@Getter
-@Setter
-@ToString
-public class GitRepo implements Serializable {
+@Data
+@Embeddable
+public class GitRepo {
 
     private String name;
     private String user;
@@ -26,31 +25,4 @@ public class GitRepo implements Serializable {
         this.host = parsedUrl.getHost();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-
-        GitRepo gitRepo = (GitRepo) obj;
-
-        if (!name.equals(gitRepo.name)) {
-            return false;
-        }
-        if (!user.equals(gitRepo.user)) {
-            return false;
-        }
-        return host.equals(gitRepo.host);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + user.hashCode();
-        result = 31 * result + host.hashCode();
-        return result;
-    }
 }

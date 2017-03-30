@@ -6,15 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.repositories.GitRepositoriesRepository;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +33,7 @@ public class GitRepositoriesControllerTest {
 
     private static final Inspection EXPECTED_INSPECTION = Inspection
             .builder()
-            .inspectionId("someId")
+            .id(123L)
             .build();
 
     private static final String REPOSITORY_URL = "https://github.com/user/repo";
@@ -50,35 +46,10 @@ public class GitRepositoriesControllerTest {
     @MockBean
     private InspectionsService inspectionsService;
 
-    @MockBean
-    private GitRepositoriesRepository gitRepositoriesRepository;
-
-    @Test
-    public void testGetInspectionsIds() throws Exception {
-        HashSet<String> expectedResult = Sets.newHashSet(EXPECTED_INSPECTION.getId());
-        given(gitRepositoriesRepository.getRepositoryInspections(any())).willReturn(expectedResult);
-        ResultActions result = this.mockMvc
-                .perform(get("/api/v1/repositories/inspections_ids")
-                                 .param("url", REPOSITORY_URL)
-                                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-                .andExpect(status().isOk());
-        String jsonString = result.andReturn().getResponse().getContentAsString();
-        Set<String> actualResult = mapper.readValue(jsonString, new TypeReference<Set<String>>() {
-        });
-        ReflectionAssert.assertReflectionEquals(
-                expectedResult,
-                actualResult
-        );
-    }
-
-
     @Test
     public void testGetInspections() throws Exception {
-        String expectedInspectionId = EXPECTED_INSPECTION.getId();
-        HashSet<String> expectedInspectionsIds = Sets.newHashSet(expectedInspectionId);
         List<Inspection> expectedResult = Lists.newArrayList(EXPECTED_INSPECTION);
-        given(gitRepositoriesRepository.getRepositoryInspections(any())).willReturn(expectedInspectionsIds);
-        given(inspectionsService.getInspection(expectedInspectionId)).willReturn(EXPECTED_INSPECTION);
+        given(inspectionsService.getRepositoryInspections(any())).willReturn(expectedResult);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections")
                                  .param("url", REPOSITORY_URL)

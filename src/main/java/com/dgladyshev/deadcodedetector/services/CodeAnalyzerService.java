@@ -158,7 +158,6 @@ public class CodeAnalyzerService {
                             && !elements[1].contains("lambda")
                             && !elements[1].contains(".valueOf.s")) {
                         return DeadCodeOccurrence.builder()
-                                //.id(java.util.UUID.randomUUID().toString())
                                 .type(elements[0])
                                 .name(elements[1])
                                 .file(elements[2].replace(inspectionCanonicalPath + "/", ""))

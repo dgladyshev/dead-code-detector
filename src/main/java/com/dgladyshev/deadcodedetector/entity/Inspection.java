@@ -6,6 +6,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -14,20 +15,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.beans.BeanUtils;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-@SuppressWarnings("PMD.NullAssignment")
 @Slf4j
 @Entity
-//@DynamicUpdate
+@DynamicUpdate
 public class Inspection {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private GitRepo gitRepo;
     private String url;
@@ -42,7 +43,7 @@ public class Inspection {
     private Long timeSpentAnalyzingMillis;
     @ElementCollection
     private List<String> deadCodeTypesFound;
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     private List<DeadCodeOccurrence> deadCodeOccurrences;
 
     public Inspection(GitRepo gitRepo, String language, String branch, String url) {

@@ -113,7 +113,7 @@ public class InspectionsService {
     private void checkIfInspectionIsLocked(Long id) {
         Inspection inspection = inspectionsRepository.findOne(id);
         if (inspection == null) {
-            throw new NoSuchInspectionException("Cannot delete inspection because there is none with such id");
+            throw new NoSuchInspectionException("There is no inspection with such id");
         }
         InspectionState state = inspection.getState();
         if (!INSPECTION_COMPLETED_STATES.contains(state)) {

@@ -10,7 +10,6 @@ endpoints:
   shutdown:
     enabled: false
 
-max.stored.repositories: 100000
 command.line.timeout: 12000000
 
 ---
@@ -19,14 +18,12 @@ spring:
 
 data.dir: ./data
 scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set to you local scitools path
-max.stored.inspections: 100
 
 ---
 spring:
     profiles: test
 data.dir: /data
 scitools.dir: /scitools/bin/linux64
-max.stored.inspections: 100
 
 ---
 spring:
@@ -34,5 +31,4 @@ spring:
 
 data.dir: /data
 scitools.dir: /scitools/bin/linux64
-max.stored.inspections: 10000
 
