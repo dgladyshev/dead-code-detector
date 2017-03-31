@@ -11,6 +11,7 @@ import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,9 +156,12 @@ public class CodeAnalyzerService {
                     if (
                             !StringUtils.isEmptyOrNull(line)
                             && elements.length > 3
+                            //all further checks are custom hacks
                             && ALLOWED_INSPECTION_TYPES.contains(elements[0])
                             && !elements[1].contains("lambda")
-                            && !elements[1].contains(".valueOf.s")) {
+                            && !elements[1].contains(".valueOf.s")
+                            && !(elements[0].equalsIgnoreCase("Parameter")
+                                 && checkFileContainsString(elements[2], "abstract class"))) {
                         return DeadCodeOccurrence.builder()
                                 .type(elements[0])
                                 .name(elements[1])
@@ -170,6 +175,18 @@ public class CodeAnalyzerService {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    //Return false if check fails because of IOException
+    private boolean checkFileContainsString(String filePath, String substring) {
+        try {
+            return FileUtils
+                    .readFileToString(new File(filePath), Charset.defaultCharset())
+                    .contains(substring);
+        } catch (IOException ex) {
+            log.error("Failed to read contents of the file {} because of exception {}", filePath, ex);
+            return false;
+        }
     }
 
     private static String getCanonicalPath(String relativePath) throws IOException {
