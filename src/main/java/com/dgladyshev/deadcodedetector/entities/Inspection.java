@@ -1,4 +1,4 @@
-package com.dgladyshev.deadcodedetector.entity;
+package com.dgladyshev.deadcodedetector.entities;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +48,7 @@ public class Inspection {
     @ElementCollection
     private List<String> deadCodeTypesFound;
     @ElementCollection(fetch = FetchType.LAZY)
-    private List<DeadCodeOccurrence> deadCodeOccurrences;
+    private List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences;
 
     public Inspection(GitRepo gitRepo, String language, String branch, String url) {
         this.gitRepo = gitRepo;
@@ -60,8 +60,8 @@ public class Inspection {
     //returns filtered representation of inspection
     //warning: method creates new instance of inspection class
     public Inspection toFilteredInspection(String filter) {
-        if (this.getDeadCodeOccurrences() != null) {
-            List<DeadCodeOccurrence> filteredOccurrences = this.getDeadCodeOccurrences()
+        if (this.getAntiPatternCodeOccurrences() != null) {
+            List<AntiPatternCodeOccurrence> filteredOccurrences = this.getAntiPatternCodeOccurrences()
                     .stream()
                     .filter(occurrence -> {
                         String type = occurrence.getType().toLowerCase();
@@ -70,7 +70,7 @@ public class Inspection {
                     .collect(Collectors.toList());
             Inspection filteredInspection = BeanUtils.instantiateClass(Inspection.class);
             BeanUtils.copyProperties(this, filteredInspection);
-            filteredInspection.setDeadCodeOccurrences(filteredOccurrences);
+            filteredInspection.setAntiPatternCodeOccurrences(filteredOccurrences);
             return filteredInspection;
         } else {
             return this;

@@ -1,6 +1,6 @@
 package com.dgladyshev.deadcodedetector.services;
 
-import com.dgladyshev.deadcodedetector.entity.GitRepo;
+import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchGitBranchException;
 import com.google.common.collect.Lists;
 import java.io.File;
@@ -19,7 +19,7 @@ public class GitService {
     /**
      * Downloads any public git repository to given path.
      *
-     * @param gitRepo           GitRepo entity which contains git url and other related information
+     * @param gitRepo           GitRepo entities which contains git url and other related information
      * @param inspectionDirPath path to the inspection directory in which subdirectory with repository should be
      *                          created
      * @param branch            git branch which needs to be cloned

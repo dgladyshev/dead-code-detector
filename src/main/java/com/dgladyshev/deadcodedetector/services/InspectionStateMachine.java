@@ -1,8 +1,8 @@
 package com.dgladyshev.deadcodedetector.services;
 
-import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurrence;
-import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.entity.InspectionState;
+import com.dgladyshev.deadcodedetector.entities.AntiPatternCodeOccurrence;
+import com.dgladyshev.deadcodedetector.entities.Inspection;
+import com.dgladyshev.deadcodedetector.entities.InspectionState;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +25,7 @@ public class InspectionStateMachine {
                 inspection.setStateDescription("Inspection created");
                 break;
             case DOWNLOADING:
-                inspection.setDeadCodeOccurrences(null);
+                inspection.setAntiPatternCodeOccurrences(null);
                 inspection.setDeadCodeTypesFound(null);
                 inspection.setTimeSpentAnalyzingMillis(null);
                 inspection.setTimestampAnalysisStart(null);
@@ -61,12 +61,12 @@ public class InspectionStateMachine {
         );
     }
 
-    public void complete(Inspection inspection, List<DeadCodeOccurrence> deadCodeOccurrences) {
-        inspection.setDeadCodeOccurrences(deadCodeOccurrences);
+    public void complete(Inspection inspection, List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences) {
+        inspection.setAntiPatternCodeOccurrences(antiPatternCodeOccurrences);
         inspection.setDeadCodeTypesFound(
-                deadCodeOccurrences
+                antiPatternCodeOccurrences
                         .stream()
-                        .map(DeadCodeOccurrence::getType)
+                        .map(AntiPatternCodeOccurrence::getType)
                         .distinct()
                         .sorted(String::compareTo)
                         .collect(Collectors.toList())

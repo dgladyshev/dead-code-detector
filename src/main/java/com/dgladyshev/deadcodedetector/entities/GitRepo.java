@@ -1,4 +1,4 @@
-package com.dgladyshev.deadcodedetector.entity;
+package com.dgladyshev.deadcodedetector.entities;
 
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
 import javax.persistence.Embeddable;

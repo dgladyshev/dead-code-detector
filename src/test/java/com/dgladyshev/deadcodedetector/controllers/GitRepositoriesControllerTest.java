@@ -5,7 +5,7 @@ import static org.mockito.Matchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

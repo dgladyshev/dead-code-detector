@@ -2,27 +2,27 @@ package com.dgladyshev.deadcodedetector.services;
 
 import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
 
-import com.dgladyshev.deadcodedetector.entity.DeadCodeOccurrence;
-import com.dgladyshev.deadcodedetector.entity.GitRepo;
-import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.entity.InspectionState;
+import com.dgladyshev.deadcodedetector.entities.AntiPatternCodeOccurrence;
+import com.dgladyshev.deadcodedetector.entities.GitRepo;
+import com.dgladyshev.deadcodedetector.entities.Inspection;
+import com.dgladyshev.deadcodedetector.entities.InspectionState;
 import com.dgladyshev.deadcodedetector.exceptions.ExecProcessException;
+import com.dgladyshev.deadcodedetector.services.rules.MatchRuleFunction;
 import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
-import com.google.common.collect.Sets;
+import com.scitools.understand.Database;
+import com.scitools.understand.Understand;
+import com.scitools.understand.UnderstandException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -32,14 +32,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class CodeAnalyzerService {
 
-    private static final Set<String> ALLOWED_INSPECTION_TYPES = Sets.newHashSet(
-            "Parameter",
-            "Private Method",
-            "Private Static Generic Method",
-            "Private Static Method",
-            "Variable",
-            "Private Variable"
-    );
+    @Autowired
+    private Set<MatchRuleFunction> matchRules;
 
     @Value("${scitools.dir}")
     private String scitoolsDir;
@@ -64,8 +58,8 @@ public class CodeAnalyzerService {
     }
 
     /**
-     * Downloads git repository for given Inspection entity, creates .udb file and then searches for problems in code.
-     * Returns nothings but changes state of Inspection entity on each step of processing.
+     * Downloads git repository for given Inspection entities, creates .udb file and then searches for problems in code.
+     * Returns nothings but changes state of Inspection entities on each step of processing.
      *
      * @param id unique inspection id
      */
@@ -87,15 +81,27 @@ public class CodeAnalyzerService {
                             gitRepo.getName(),
                             inspection.getLanguage()
                     );
-                    List<DeadCodeOccurrence> deadCodeOccurrences = findDeadCodeOccurrences(inspectionDirPath);
-                    inspectionStateMachine.complete(inspection, deadCodeOccurrences);
-                } catch (IOException | ExecProcessException ex) {
+                    List<AntiPatternCodeOccurrence> codeOccurrences = findAntiPatterns(inspectionDirPath);
+                    inspectionStateMachine.complete(inspection, postProcessCodeOccurrences(codeOccurrences));
+                } catch (IOException | ExecProcessException | UnderstandException ex) {
                     inspectionStateMachine.fail(inspection, ex);
                 }
             });
         } catch (GitAPIException | IOException ex) {
             inspectionStateMachine.fail(inspection, ex);
         }
+    }
+
+    //TODO refactor
+    private List<AntiPatternCodeOccurrence> postProcessCodeOccurrences(
+            List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences) {
+        return antiPatternCodeOccurrences
+                .stream()
+                .filter(occurrence -> !(occurrence.getType().equalsIgnoreCase("Parameter")
+                                        && checkFileContainsString(occurrence.getFile(), "abstract class")))
+                .filter(occurrence -> !occurrence.getName().contains("lambda"))
+                .filter(occurrence -> !occurrence.getName().contains(".valueOf.s"))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -120,61 +126,18 @@ public class CodeAnalyzerService {
         );
     }
 
-    /**
-     * Executes shell command in order to analyze existing db.udb with unused.pl Perl script
-     * Example of generated command: und uperl ./unused.pl -db ./db.udb > results.txt
-     *
-     * @param inspectionDirPath path to the inspection directory which must contain repository subdirectory
-     * @throws IOException          if some paths cannot be converted to canonical form
-     * @throws ExecProcessException if shell command failed to be executed or return non-zero error code
-     */
-    private List<DeadCodeOccurrence> findDeadCodeOccurrences(String inspectionDirPath)
-            throws IOException, ExecProcessException {
-        String sciptOutput = CommandLineUtils.execProcess(
-                getCanonicalPath(scitoolsDir + "/und"),
-                timeout,
-                "uperl", getCanonicalPath("./unused.pl"),
-                "-db", getCanonicalPath(inspectionDirPath + "/db.udb")
-        );
-        return toDeadCodeOccurrences(sciptOutput, getCanonicalPath(inspectionDirPath));
+    public List<AntiPatternCodeOccurrence> findAntiPatterns(String inspectionDirPath)
+            throws UnderstandException, IOException {
+        Database database = Understand.open(getCanonicalPath(inspectionDirPath + "/db.udb"));
+        return matchRules.stream()
+                //.filter() //TODO add filtering by anti-pattern type if needed
+                .map(rule -> rule.findMatches(database))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Parses output of unused.pl Perl script and converts it to the list of dead code occurrences
-     *
-     * @param scriptOutput            path to the inspection directory which must contain repository subdirectory
-     * @param inspectionCanonicalPath canonical path to the inspection directory
-     * @return the list of dead code occurrences
-     */
-    private List<DeadCodeOccurrence> toDeadCodeOccurrences(String scriptOutput, String inspectionCanonicalPath) {
-        String[] lines = scriptOutput.split("\\r?\\n");
-        return Stream.of(lines)
-                .map(line -> {
-                    String[] elements = line.split("&");
-                    //Note: SciTools can't process lambda correctly and generate false positives
-                    //It also produces non-existent occurrence for "valueOf" method in enums
-                    if (
-                            !StringUtils.isEmptyOrNull(line)
-                            && elements.length > 3
-                            //all further checks are custom hacks
-                            && ALLOWED_INSPECTION_TYPES.contains(elements[0])
-                            && !elements[1].contains("lambda")
-                            && !elements[1].contains(".valueOf.s")
-                            && !(elements[0].equalsIgnoreCase("Parameter")
-                                 && checkFileContainsString(elements[2], "abstract class"))) {
-                        return DeadCodeOccurrence.builder()
-                                .type(elements[0])
-                                .name(elements[1])
-                                .file(elements[2].replace(inspectionCanonicalPath + "/", ""))
-                                .line(elements[3])
-                                .column(elements[4])
-                                .build();
-                    } else {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    private static String getCanonicalPath(String relativePath) throws IOException {
+        return new File(relativePath).getCanonicalPath();
     }
 
     //Return false if check fails because of IOException
@@ -189,10 +152,4 @@ public class CodeAnalyzerService {
         }
     }
 
-    private static String getCanonicalPath(String relativePath) throws IOException {
-        return new File(relativePath).getCanonicalPath();
-    }
-
 }
-
-

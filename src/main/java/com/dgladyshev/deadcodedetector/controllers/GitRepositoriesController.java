@@ -1,7 +1,7 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
-import com.dgladyshev.deadcodedetector.entity.GitRepo;
-import com.dgladyshev.deadcodedetector.entity.Inspection;
+import com.dgladyshev.deadcodedetector.entities.GitRepo;
+import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import java.util.List;
 import java.util.Set;

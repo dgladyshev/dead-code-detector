@@ -17,6 +17,7 @@ RUN apt-get install libxtst6 -y
 ENV LD_LIBRARY_PATH /usr/lib/jvm/java-8-oracle/jre/lib/amd64:/scitools/bin/linux64
 ENV PYTHONPATH /scitools/bin/linux64/python
 ENV STIHOME /scitools/bin/linux64
+ENV PATH .:$PATH:/scitools/bin/linux64
 
 RUN wget http://builds.scitools.com/all_builds/b844/Understand/Understand-4.0.844-Linux-64bit.tgz && tar -zxvf Understand-4.0.844-Linux-64bit.tgz
 RUN rm Understand-4.0.844-Linux-64bit.tgz
@@ -32,4 +33,4 @@ EXPOSE 8080
 
 RUN ./gradlew clean build
 
-CMD java -Xmx${MEMORY}m -Djava.security.egd=file:/dev/./urandom -jar build/libs/dead-code-detector.jar
+CMD java -Xmx${MEMORY}m -Djava.library.path=/scitools/bin/linux64:/scitools/bin/linux64/Java -Djava.security.egd=file:/dev/./urandom -jar build/libs/dead-code-detector.jar

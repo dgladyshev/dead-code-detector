@@ -3,9 +3,9 @@ package com.dgladyshev.deadcodedetector.services;
 import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
-import com.dgladyshev.deadcodedetector.entity.GitRepo;
-import com.dgladyshev.deadcodedetector.entity.Inspection;
-import com.dgladyshev.deadcodedetector.entity.InspectionState;
+import com.dgladyshev.deadcodedetector.entities.GitRepo;
+import com.dgladyshev.deadcodedetector.entities.Inspection;
+import com.dgladyshev.deadcodedetector.entities.InspectionState;
 import com.dgladyshev.deadcodedetector.exceptions.InspectionAlreadyExistsException;
 import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;

@@ -1,4 +1,4 @@
-package com.dgladyshev.deadcodedetector.entity;
+package com.dgladyshev.deadcodedetector.entities;
 
 public enum SupportedLanguages {
 
