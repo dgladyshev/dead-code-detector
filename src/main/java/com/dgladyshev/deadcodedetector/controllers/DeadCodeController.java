@@ -54,11 +54,10 @@ public class DeadCodeController {
         );
         Inspection inspection = inspectionsService.createInspection(
                 gitRepo,
-                trimToEmpty(branch),
-                language.getName(),
+                language.getName(), trimToEmpty(branch),
                 trimToEmpty(url)
         );
-        codeAnalyzerService.inspectCode(inspection.getId());
+        codeAnalyzerService.inspectCodeAsync(inspection.getId());
         return inspection;
     }
 
@@ -72,7 +71,7 @@ public class DeadCodeController {
         log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
         GitRepo gitRepo = new GitRepo(url);
         Inspection inspection = inspectionsService.getRefreshableInspection(gitRepo, trimToEmpty(branch));
-        codeAnalyzerService.inspectCode(inspection.getId());
+        codeAnalyzerService.inspectCodeAsync(inspection.getId());
     }
 
     @RequestMapping(

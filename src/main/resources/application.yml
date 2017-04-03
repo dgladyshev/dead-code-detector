@@ -22,7 +22,7 @@ scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set to you local scitools p
 ---
 spring:
     profiles: test
-data.dir: /data
+data.dir: ./data
 scitools.dir: /scitools/bin/linux64
 
 ---

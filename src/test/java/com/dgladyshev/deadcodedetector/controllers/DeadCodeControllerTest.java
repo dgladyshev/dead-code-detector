@@ -95,7 +95,7 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        when(inspectionsService.createInspection(any(), any() , any(), any())).thenReturn(EXPECTED_INSPECTION);
+        when(inspectionsService.createInspection(any(), any(), any(), any())).thenReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc.perform(post("/api/v1/inspections")
                                                             .param("url",
                                                                    "https://github.com/dgladyshev/dead-code-detector.git")
@@ -116,7 +116,8 @@ public class DeadCodeControllerTest {
 
     private List<Inspection> toInspections(ResultActions result) throws java.io.IOException {
         String jsonString = result.andReturn().getResponse().getContentAsString();
-        return mapper.readValue(jsonString, new TypeReference<List<Inspection>>() {});
+        return mapper.readValue(jsonString, new TypeReference<List<Inspection>>() {
+        });
     }
 
 }

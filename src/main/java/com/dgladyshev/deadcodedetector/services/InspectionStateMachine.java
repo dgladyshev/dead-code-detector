@@ -74,7 +74,7 @@ public class InspectionStateMachine {
         changeState(inspection, InspectionState.COMPLETED);
     }
 
-    public void fail(Inspection inspection, Exception ex) {
+    public void fail(Inspection inspection, Throwable ex) {
         log.error("Error occurred for inspection id: {}. Error: {}", inspection.getId(), ex);
         inspection.setStateDescription(ex.getMessage() + ". " + ex.getCause());
         changeState(inspection, InspectionState.FAILED);

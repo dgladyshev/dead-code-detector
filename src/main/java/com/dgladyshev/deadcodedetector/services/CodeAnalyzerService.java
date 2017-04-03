@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -57,14 +59,19 @@ public class CodeAnalyzerService {
         this.inspectionStateMachine = inspectionStateMachine;
     }
 
+
+    @Async
+    public void inspectCodeAsync(Long id) {
+        inspectCode(id);
+    }
+
     /**
      * Downloads git repository for given Inspection entities, creates .udb file and then searches for problems in code.
      * Returns nothings but changes state of Inspection entities on each step of processing.
      *
      * @param id unique inspection id
      */
-    @Async
-    public void inspectCode(Long id) {
+    public Inspection inspectCode(Long id) {
         Inspection inspection = inspectionsService.getInspection(id);
         GitRepo gitRepo = inspection.getGitRepo();
         String inspectionDirPath = dataDir + "/" + id;
@@ -73,6 +80,7 @@ public class CodeAnalyzerService {
             inspectionStateMachine.changeState(inspection, InspectionState.DOWNLOADING);
             gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch(), inspection.getUrl());
             inspectionStateMachine.changeState(inspection, InspectionState.IN_QUEUE);
+            CompletableFuture<Inspection> future = new CompletableFuture<>();
             executor.submit(() -> {
                 try {
                     inspectionStateMachine.changeState(inspection, InspectionState.PROCESSING);
@@ -83,12 +91,16 @@ public class CodeAnalyzerService {
                     );
                     List<AntiPatternCodeOccurrence> codeOccurrences = findAntiPatterns(inspectionDirPath);
                     inspectionStateMachine.complete(inspection, postProcessCodeOccurrences(codeOccurrences));
-                } catch (IOException | ExecProcessException | UnderstandException ex) {
+                } catch (IOException | ExecProcessException | UnderstandException | UnsatisfiedLinkError ex) {
                     inspectionStateMachine.fail(inspection, ex);
+                } finally {
+                    future.complete(inspection);
                 }
             });
-        } catch (GitAPIException | IOException ex) {
+            return future.get();
+        } catch (GitAPIException | IOException | InterruptedException | ExecutionException ex) {
             inspectionStateMachine.fail(inspection, ex);
+            return inspection;
         }
     }
 
@@ -126,7 +138,7 @@ public class CodeAnalyzerService {
         );
     }
 
-    public List<AntiPatternCodeOccurrence> findAntiPatterns(String inspectionDirPath)
+    private List<AntiPatternCodeOccurrence> findAntiPatterns(String inspectionDirPath)
             throws UnderstandException, IOException {
         Database database = Understand.open(getCanonicalPath(inspectionDirPath + "/db.udb"));
         return matchRules.stream()

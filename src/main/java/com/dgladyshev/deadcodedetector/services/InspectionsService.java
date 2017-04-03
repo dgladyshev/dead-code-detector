@@ -41,7 +41,7 @@ public class InspectionsService {
     @Autowired
     private InspectionStateMachine inspectionStateMachine;
 
-    public Inspection createInspection(GitRepo repo, String branch, String language, String url) {
+    public Inspection createInspection(GitRepo repo, String language, String branch, String url) {
         checkBranch(branch);
         if (isInspectionExists(repo, branch)) {
             throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "

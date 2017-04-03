@@ -106,3 +106,8 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 
+#Project specific
+.git/
+.gradle/
+build/
+classes/
