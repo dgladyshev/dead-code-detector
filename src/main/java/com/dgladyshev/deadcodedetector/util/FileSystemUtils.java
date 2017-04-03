@@ -1,9 +1,11 @@
 package com.dgladyshev.deadcodedetector.util;
 
-import java.io.File;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 @Slf4j
 public final class FileSystemUtils {
@@ -25,4 +27,21 @@ public final class FileSystemUtils {
             }
         }
     }
+
+    public static String getCanonicalPath(String relativePath) throws IOException {
+        return new File(relativePath).getCanonicalPath();
+    }
+
+    //Return false if check fails because of IOException
+    public static boolean checkFileContainsString(String filePath, String substring) {
+        try {
+            return FileUtils
+                    .readFileToString(new File(filePath), Charset.defaultCharset())
+                    .contains(substring);
+        } catch (IOException ex) {
+            log.error("Failed to read contents of the file {} because of exception {}", filePath, ex);
+            return false;
+        }
+    }
+
 }

@@ -1,7 +1,5 @@
 package com.dgladyshev.deadcodedetector.services;
 
-import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
-
 import com.dgladyshev.deadcodedetector.entities.AntiPatternCodeOccurrence;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
@@ -12,9 +10,14 @@ import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
 import com.scitools.understand.Database;
 import com.scitools.understand.Understand;
 import com.scitools.understand.UnderstandException;
-import java.io.File;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -22,13 +25,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
+
+import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.*;
 
 @Slf4j
 @Service
@@ -146,22 +144,6 @@ public class CodeAnalyzerService {
                 .map(rule -> rule.findMatches(database))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-    }
-
-    private static String getCanonicalPath(String relativePath) throws IOException {
-        return new File(relativePath).getCanonicalPath();
-    }
-
-    //Return false if check fails because of IOException
-    private boolean checkFileContainsString(String filePath, String substring) {
-        try {
-            return FileUtils
-                    .readFileToString(new File(filePath), Charset.defaultCharset())
-                    .contains(substring);
-        } catch (IOException ex) {
-            log.error("Failed to read contents of the file {} because of exception {}", filePath, ex);
-            return false;
-        }
     }
 
 }

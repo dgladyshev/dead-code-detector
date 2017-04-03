@@ -5,12 +5,13 @@ import com.dgladyshev.deadcodedetector.entities.AntiPatternType;
 import com.scitools.understand.Database;
 import com.scitools.understand.Entity;
 import com.scitools.understand.Reference;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 @Component
 @Scope("singleton")
@@ -29,6 +30,7 @@ public class MatchDeadParametersRule extends MatchAbstractRule {
             occurrences.addAll(
                     Arrays.stream(methods)
                             .map(ref -> ref.ent())
+                            //.filter(method -> clazz.kind().name().contains("Abstract")) //TODO check
                             .filter(method -> !(hasReference(method) && hasReferenceOnTheSameLine(clazz, method)))
                             .map(method -> processParams(method))
                             .flatMap(List::stream)
