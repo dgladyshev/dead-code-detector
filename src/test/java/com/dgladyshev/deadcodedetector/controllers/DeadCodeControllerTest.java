@@ -1,125 +1,140 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.mock;
+import static org.springframework.http.MediaType.TEXT_EVENT_STREAM;
 
+import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import java.util.List;
+import org.apache.http.client.utils.URIBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.client.RestTemplate;
-import org.unitils.reflectionassert.ReflectionAssert;
+import org.springframework.test.web.reactive.server.FluxExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class DeadCodeControllerTest {
 
+    private static final String EXPECTED_ID = "some-unique-id";
+    private static final String EXPECTED_REPO_URL = "https://github.com/dgladyshev/dead-code-detector.git";
+    private static final String EXPECTED_LANGUAGE = "JAVA";
+    private static final String EXPECTED_BRANCH = "master";
+
     private static final Inspection EXPECTED_INSPECTION = Inspection
             .builder()
-            .id("some-unique-id")
+            .id(EXPECTED_ID)
+            .url(EXPECTED_REPO_URL)
+            .language(EXPECTED_LANGUAGE)
+            .branch(EXPECTED_BRANCH)
             .build();
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private InspectionsService inspectionsService = mock(InspectionsService.class);
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private CodeAnalyzerService codeAnalyzerService;
-
-    @MockBean
-    private InspectionsService inspectionsService;
-
-    @MockBean
-    private UrlCheckerService urlCheckerService;
-
-    @MockBean
-    private RestTemplate restTemplate;
+    private WebTestClient client = WebTestClient
+            .bindToController(
+                    new DeadCodeController(
+                            mock(CodeAnalyzerService.class),
+                            inspectionsService,
+                            mock(UrlCheckerService.class)
+                    )
+            )
+            .build();
 
     @Test
     public void testGetInspections() throws Exception {
+        //TODO test return of multiple items
         given(inspectionsService.getInspections()).willReturn(Flux.just(EXPECTED_INSPECTION));
-        ResultActions result = this.mockMvc
-                .perform(get("/api/v1/inspections")
-                        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-                .andExpect(status().isOk());
-        ReflectionAssert.assertReflectionEquals(
-                Lists.newArrayList(EXPECTED_INSPECTION),
-                toInspections(result)
-        );
+
+        FluxExchangeResult<Inspection> result = client.get().uri("/api/v1/inspections")
+                .accept(TEXT_EVENT_STREAM)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(TEXT_EVENT_STREAM)
+                .expectBody(Inspection.class)
+                .returnResult();
+
+        StepVerifier.create(result.getResponseBody())
+                .expectNext(EXPECTED_INSPECTION)
+                .thenCancel()
+                .verify();
     }
 
     @Test
     public void testGetInspectionById() throws Exception {
-        String inspectionId = EXPECTED_INSPECTION.getId();
-        given(inspectionsService.getInspection(inspectionId)).willReturn(Mono.just(EXPECTED_INSPECTION));
-        ResultActions result = this.mockMvc
-                .perform(get("/api/v1/inspections/" + inspectionId)
-                        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-                .andExpect(status().isOk());
-        ReflectionAssert.assertReflectionEquals(
-                EXPECTED_INSPECTION,
-                toInspection(result)
-        );
+        given(inspectionsService.getInspection(EXPECTED_ID)).willReturn(Mono.just(EXPECTED_INSPECTION));
+
+        FluxExchangeResult<Inspection> result = client.get().uri("/api/v1/inspections/" + EXPECTED_ID)
+                .accept(TEXT_EVENT_STREAM)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(TEXT_EVENT_STREAM)
+                .expectBody(Inspection.class)
+                .returnResult();
+
+        StepVerifier.create(result.getResponseBody())
+                .expectNext(EXPECTED_INSPECTION)
+                .thenCancel()
+                .verify();
     }
 
     @Test
     public void testDeleteInspectionById() throws Exception {
-        this.mockMvc.perform(delete("/api/v1/inspections/" + EXPECTED_INSPECTION.getId())
-                .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-                .andExpect(status().isOk());
+        given(inspectionsService.deleteInspection(EXPECTED_ID)).willReturn(Mono.empty());
+
+        FluxExchangeResult<Inspection> result = client.delete().uri("/api/v1/inspections/" + EXPECTED_ID)
+                .accept(TEXT_EVENT_STREAM)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Inspection.class)
+                .returnResult();
+
+        StepVerifier.create(result.getResponseBody())
+                .expectNextCount(0)
+                .thenCancel()
+                .verify();
     }
 
     @Test
     public void testAddInspectionById() throws Exception {
-        given(inspectionsService.createInspection(any(), any(), any(), any()))
-                .willReturn(Mono.just(EXPECTED_INSPECTION));
-        ResultActions result = this.mockMvc.perform(post("/api/v1/inspections")
-                .param("url",
-                        "https://github.com/dgladyshev/dead-code-detector.git")
-                .param("language", "JAVA")
-                .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-                .andExpect(status().isOk());
-        ReflectionAssert.assertReflectionEquals(
-                EXPECTED_INSPECTION,
-                toInspection(result)
-        );
-    }
+        GitRepo gitRepo = new GitRepo(EXPECTED_REPO_URL);
+        given(inspectionsService.createInspection(
+                gitRepo,
+                EXPECTED_LANGUAGE.toLowerCase(),
+                EXPECTED_BRANCH,
+                EXPECTED_REPO_URL
+        )).willReturn(Mono.just(EXPECTED_INSPECTION));
+        FluxExchangeResult<Inspection> result = client.post()
+                .uri(
+                        new URIBuilder()
+                                .setPath("/api/v1/inspections/")
+                                .setParameter("url", EXPECTED_REPO_URL)
+                                .setParameter("language", EXPECTED_LANGUAGE)
+                                .setParameter("branch", EXPECTED_BRANCH)
+                                .build()
+                )
+                .accept(TEXT_EVENT_STREAM)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(TEXT_EVENT_STREAM)
+                .expectBody(Inspection.class)
+                .returnResult();
 
-    private Inspection toInspection(ResultActions result) throws java.io.IOException {
-        String jsonString = result.andReturn().getResponse().getContentAsString();
-        return mapper.readValue(jsonString, Inspection.class);
-    }
-
-    private List<Inspection> toInspections(ResultActions result) throws java.io.IOException {
-        String jsonString = result.andReturn().getResponse().getContentAsString();
-        return mapper.readValue(jsonString, new TypeReference<List<Inspection>>() {
-        });
+        StepVerifier.create(result.getResponseBody())
+                .expectNext(EXPECTED_INSPECTION)
+                .thenCancel()
+                .verify();
     }
 
 }

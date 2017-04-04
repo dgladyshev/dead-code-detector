@@ -9,8 +9,6 @@ import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -75,7 +74,7 @@ public class DeadCodeController {
     }
 
     @GetMapping(value = "/inspections")
-    public List<Inspection> getInspections(@RequestParam(required = false) Long pageNumber,
+    public Flux<Inspection> getInspections(@RequestParam(required = false) Long pageNumber,
                                            @RequestParam(required = false) Long pageSize) {
         if (pageNumber != null && pageSize != null) {
             if (pageNumber < 1 || pageSize < 0) {
@@ -84,15 +83,16 @@ public class DeadCodeController {
             } else {
                 //TODO add real pagination after it will be supported by reactive repository
                 //return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
-                return inspectionsService
-                        .getInspections()
-                        .skip((pageNumber - 1) * pageSize)
-                        .toStream()
-                        .limit(pageSize)
-                        .collect(Collectors.toList());
+                return Flux.fromStream(
+                        inspectionsService
+                                .getInspections()
+                                .skip((pageNumber - 1) * pageSize)
+                                .toStream()
+                                .limit(pageSize)
+                );
             }
         } else {
-            return inspectionsService.getInspections().toStream().collect(Collectors.toList());
+            return inspectionsService.getInspections();
         }
     }
 
