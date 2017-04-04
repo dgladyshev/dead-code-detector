@@ -3,7 +3,6 @@ package com.dgladyshev.deadcodedetector.services;
 import com.dgladyshev.deadcodedetector.entities.AntiPatternCodeOccurrence;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.entities.InspectionState;
-import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -15,15 +14,11 @@ import org.springframework.stereotype.Service;
 public class InspectionStateMachine {
 
     @Autowired
-    private InspectionsRepository inspectionsRepository;
+    private InspectionsService inspectionsService;
 
     public void changeState(Inspection inspection, InspectionState state) {
         inspection.setState(state);
         switch (state) {
-            case ADDED:
-                inspection.setTimestampInspectionCreated(System.currentTimeMillis());
-                inspection.setStateDescription("Inspection created");
-                break;
             case DOWNLOADING:
                 inspection.setAntiPatternCodeOccurrences(null);
                 inspection.setDeadCodeTypesFound(null);
@@ -52,13 +47,7 @@ public class InspectionStateMachine {
             default:
                 break;
         }
-        inspectionsRepository.save(inspection);
-        log.info(
-                "Inspection id: {}. State: {}. Description: {}",
-                inspection.getId(),
-                inspection.getState(),
-                inspection.getStateDescription()
-        );
+        inspectionsService.saveInspection(inspection);
     }
 
     public void complete(Inspection inspection, List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences) {

@@ -9,17 +9,19 @@ import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
-import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
@@ -39,80 +41,74 @@ public class DeadCodeController {
         this.urlCheckerService = urlCheckerService;
     }
 
-    @RequestMapping(
-            value = "/inspections",
-            method = RequestMethod.POST,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public Inspection addInspection(@RequestParam String url,
-                                    @RequestParam SupportedLanguages language,
-                                    @RequestParam(defaultValue = "master") String branch) {
-        log.info("Incoming request for analysis, url: {}, language: {}, branch: {}", url, language, branch);
+    @PostMapping(value = "/inspections")
+    public Mono<Inspection> addInspection(@RequestParam String url,
+                                          @RequestParam SupportedLanguages language,
+                                          @RequestParam(defaultValue = "master") String branch) {
         GitRepo gitRepo = new GitRepo(url);
         urlCheckerService.checkAccessibility(
                 trimToEmpty(url).replace(".git", "")
         );
-        Inspection inspection = inspectionsService.createInspection(
-                gitRepo,
-                language.getName(), trimToEmpty(branch),
-                trimToEmpty(url)
-        );
-        codeAnalyzerService.inspectCodeAsync(inspection.getId());
-        return inspection;
+        return inspectionsService
+                .createInspection(
+                        gitRepo,
+                        language.getName(), trimToEmpty(branch),
+                        trimToEmpty(url)
+                )
+                .doOnSuccess(codeAnalyzerService::inspectCode);
     }
 
-    @RequestMapping(
-            value = "/inspections/refresh",
-            method = RequestMethod.POST,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public void refreshInspection(@RequestParam String url,
-                                  @RequestParam(defaultValue = "master") String branch) {
-        log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
+    @PostMapping(value = "/inspections/refresh")
+    public Mono<ResponseEntity<Void>> refreshInspection(@RequestParam String url,
+                                                              @RequestParam(defaultValue = "master") String branch) {
         GitRepo gitRepo = new GitRepo(url);
-        Inspection inspection = inspectionsService.getRefreshableInspection(gitRepo, trimToEmpty(branch));
-        codeAnalyzerService.inspectCodeAsync(inspection.getId());
+        return inspectionsService
+                .getRefreshableInspection(
+                        gitRepo,
+                        trimToEmpty(branch) //TODO move to constructor if possible
+                )
+                .doOnSuccess(codeAnalyzerService::inspectCode)
+                //TODO throw exception which will result in code 404 instead
+                .then()
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.status(404).body(null));
     }
 
-    @RequestMapping(
-            value = "/inspections",
-            method = RequestMethod.GET,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public Collection<Inspection> getInspections(@RequestParam(required = false) Integer pageNumber,
-                                                 @RequestParam(required = false) Integer pageSize) {
+    @GetMapping(value = "/inspections")
+    public List<Inspection> getInspections(@RequestParam(required = false) Integer pageNumber,
+                                           @RequestParam(required = false) Integer pageSize) {
         if (pageNumber != null && pageSize != null) {
             if (pageNumber < 1 || pageSize < 0) {
                 throw new MalformedRequestException("Page number must equal or bigger than 1,"
                                                     + " page size must be bigger than 0");
             } else {
-                return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
+                //TODO add real pagination after it will be supported by reactive repository
+                //return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
+                return inspectionsService
+                        .getInspections()
+                        .skip((pageNumber - 1) * pageSize)
+                        .toStream()
+                        .limit(pageSize)
+                        .collect(Collectors.toList());
             }
         } else {
-            return inspectionsService.getInspections();
+            return inspectionsService.getInspections().toStream().collect(Collectors.toList());
         }
     }
 
-    @RequestMapping(
-            value = "/inspections/{id}",
-            method = RequestMethod.GET,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public Inspection getInspectionById(@PathVariable Long id,
-                                        @RequestParam(defaultValue = "", required = false) String filter) {
-        Inspection inspection = inspectionsService.getInspection(id);
-        return (StringUtils.isEmptyOrNull(filter))
-               ? inspection
-               : inspection.toFilteredInspection(filter);
+    @GetMapping(value = "/inspections/{id}")
+    public Mono<ResponseEntity<Inspection>> getInspectionById(@PathVariable String id,
+                                                              @RequestParam(defaultValue = "", required = false) String filter) {
+        return inspectionsService.getInspection(id)
+                .map(inspection -> inspection.toFilteredInspection(filter))
+                //TODO throw exception which will result in code 404 instead
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.status(404).body(null));
     }
 
-    @RequestMapping(
-            value = "/inspections/{id}",
-            method = RequestMethod.DELETE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public void deleteInspectionById(@PathVariable Long id) {
-        inspectionsService.deleteInspection(id);
+    @DeleteMapping(value = "/inspections/{id}")
+    public Mono<Void> deleteInspectionById(@PathVariable String id) { //TODO add NotNull somehow
+        return inspectionsService.deleteInspection(id);
     }
 
 }

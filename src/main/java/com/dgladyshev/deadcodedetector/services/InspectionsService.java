@@ -12,16 +12,18 @@ import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchRepositoryException;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -38,93 +40,107 @@ public class InspectionsService {
     @Autowired
     private InspectionsRepository inspectionsRepository;
 
-    @Autowired
-    private InspectionStateMachine inspectionStateMachine;
-
-    public Inspection createInspection(GitRepo repo, String language, String branch, String url) {
+    public Mono<Inspection> createInspection(GitRepo repo, String language, String branch, String url) {
         checkBranch(branch);
         if (isInspectionExists(repo, branch)) {
-            throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "
-                                                       + "already been created. Use inspections/refresh endpoint or "
-                                                       + "choose another branch to inspect.");
+            throw new InspectionAlreadyExistsException();
         }
-        Inspection inspection = new Inspection(repo, language, branch, url);
-        inspectionStateMachine.changeState(inspection, InspectionState.ADDED);
+        Inspection inspection = Inspection.builder()
+                .id(UUID.randomUUID().toString())
+                .gitRepo(repo)
+                .timestampInspectionCreated(System.currentTimeMillis())
+                .state(InspectionState.ADDED)
+                .stateDescription("Inspection created")
+                .language(language)
+                .branch(branch)
+                .url(url)
+                .build();
         return inspectionsRepository.save(inspection);
     }
 
-    public Inspection getRefreshableInspection(GitRepo repo, String branch) {
+    public Mono<Inspection> getRefreshableInspection(GitRepo repo, String branch) {
         checkBranch(branch);
-        Inspection inspection = getInspection(repo, branch);
-        checkIfInspectionIsLocked(inspection.getId());
-        return inspection;
+        return getInspection(repo, branch)
+                .doOnNext(
+                        inspection -> checkIfInspectionIsLocked(inspection)
+                );
     }
 
-    private boolean isInspectionExists(GitRepo repo, String branch) {
-        return inspectionsRepository.findByGitRepo(repo)
-                .stream()
-                .map(Inspection::getBranch)
-                .anyMatch(branch::equalsIgnoreCase);
-    }
-
+    //TODO validate in constructor as a separate entity
     private void checkBranch(String branch) throws MalformedRequestException {
         if (StringUtils.isEmptyOrNull(trimToEmpty(branch))) {
             throw new MalformedRequestException("Branch name is empty");
         }
     }
 
-    public List<Inspection> getInspections() {
-        return Lists.newArrayList(inspectionsRepository.findAll());
+    public Flux<Inspection> getInspections() {
+        return inspectionsRepository.findAll();
     }
 
-    public List<Inspection> getPaginatedInspections(int pageNumber, int pageSize) {
-        return Lists.newArrayList(inspectionsRepository.findAll(new PageRequest(pageNumber, pageSize)));
+    /*  TODO uncomment after reactive repository will support such approach
+        public Flux<Inspection> getPaginatedInspections(int pageNumber, int pageSize) {
+            return Lists.newArrayList(inspectionsRepository.findAll(new PageRequest(pageNumber, pageSize)));
+        }*/
+
+    public Mono<Inspection> getInspection(String id) throws NoSuchInspectionException {
+        return inspectionsRepository.findOne(id);
     }
 
-    public Inspection getInspection(Long id) throws NoSuchInspectionException {
-        if (id != null && inspectionsRepository.exists(id)) {
-            return inspectionsRepository.findOne(id);
-        } else {
-            throw new NoSuchInspectionException("There is no record of any inspection with specified id");
-        }
+    private Mono<Inspection> getInspection(GitRepo repo, String branch) {
+        return inspectionsRepository.findByGitRepoAndBranch(Mono.just(repo), Mono.just(branch)).next();
     }
 
-    //TODO add endpoint for this
-    private Inspection getInspection(GitRepo repo, String branch) {
-        return inspectionsRepository.findByGitRepo(repo)
-                .stream()
-                .filter(inspection -> branch.equalsIgnoreCase(inspection.getBranch()))
-                .findAny()
-                .orElseThrow(() -> new NoSuchInspectionException("There is no inspection with specified"
-                                                                 + " url and branch."));
+    private boolean isInspectionExists(GitRepo repo, String branch) {
+        return getInspection(repo, branch).block() != null;
     }
 
-    public void deleteInspection(Long id) throws NoSuchInspectionException, InspectionIsLockedException {
-        if (id != null && inspectionsRepository.exists(id)) {
-            checkIfInspectionIsLocked(id);
-            inspectionsRepository.delete(id);
-            deleteDirectoryIfExists(dataDir + "/" + id);
-            log.info("Inspection with id: {} has been deleted", id);
-        } else {
-            throw new NoSuchInspectionException("Cannot delete inspection because there is none with such id");
-        }
+    public Mono<Void> deleteInspection(String id) throws NoSuchInspectionException, InspectionIsLockedException {
+        return Mono.just(id)
+                .doOnNext(i -> {
+                    if (inspectionsRepository.exists(id).block()) {
+                        Inspection inspection = inspectionsRepository.findOne(id).block();
+                        checkIfInspectionIsLocked(inspection); //to do on next
+                        inspectionsRepository.delete(id).block();
+                        deleteDirectoryIfExists(dataDir + "/" + id);
+                        log.info("Inspection with id: {} has been deleted", id);
+                    } else {
+                        throw new NoSuchInspectionException();
+                    }
+                })
+                .doOnError(e -> {
+                    throw Exceptions.propagate(e);
+                })
+                .then();
     }
 
-    private void checkIfInspectionIsLocked(Long id) {
-        Inspection inspection = inspectionsRepository.findOne(id);
-        if (inspection == null) {
-            throw new NoSuchInspectionException("There is no inspection with such id");
-        }
-        InspectionState state = inspection.getState();
-        if (!INSPECTION_COMPLETED_STATES.contains(state)) {
-            throw new InspectionIsLockedException("Inspection is locked to any changes until it would be completed.");
-        }
+    private void checkIfInspectionIsLocked(Inspection inspection) throws InspectionIsLockedException {
+        Mono.just(inspection)
+                .map(Inspection::getState)
+                .filter(state -> !INSPECTION_COMPLETED_STATES.contains(state))
+                .doOnNext(state -> {
+                              throw new InspectionIsLockedException();
+                          }
+                )
+                .doOnError(e -> {
+                    throw Exceptions.propagate(e);
+                })
+                .block();
     }
 
-    public List<Inspection> getRepositoryInspections(GitRepo gitRepo) throws NoSuchRepositoryException {
-        return inspectionsRepository.findByGitRepo(gitRepo);
+    public Flux<Inspection> getRepositoryInspections(GitRepo gitRepo) throws NoSuchRepositoryException {
+        return inspectionsRepository.findByGitRepo(Mono.just(gitRepo));
     }
 
+    @Async
+    public void saveInspection(Inspection inspection) {
+        inspectionsRepository.save(inspection).block();
+        log.info(
+                "Inspection updated. Id: {}. State: {}. Description: {}",
+                inspection.getId(),
+                inspection.getState(),
+                inspection.getStateDescription()
+        );
+    }
 }
 
 

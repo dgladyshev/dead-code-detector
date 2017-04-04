@@ -1,56 +1,45 @@
 package com.dgladyshev.deadcodedetector.entities;
 
+import static org.apache.commons.lang.StringUtils.trimToEmpty;
+
+import io.netty.util.internal.StringUtil;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
 @Slf4j
-@Entity
-@DynamicUpdate
+@Document
 public class Inspection {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
     private GitRepo gitRepo;
     private String url;
     private String language;
     private String branch;
-    @Enumerated(EnumType.STRING)
     private InspectionState state;
-    @Lob
-    @Column(length = 1000)
     private String stateDescription;
     private Long timestampInspectionCreated;
     private Long timestampAnalysisFinished;
     private Long timestampAnalysisStart;
     private Long timeSpentAnalyzingMillis;
-    @ElementCollection
     private List<String> deadCodeTypesFound;
-    @ElementCollection(fetch = FetchType.LAZY)
     private List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences;
 
     public Inspection(GitRepo gitRepo, String language, String branch, String url) {
+        this.id = UUID.randomUUID().toString();
         this.gitRepo = gitRepo;
         this.language = language;
         this.branch = branch;
@@ -60,7 +49,7 @@ public class Inspection {
     //returns filtered representation of inspection
     //warning: method creates new instance of inspection class
     public Inspection toFilteredInspection(String filter) {
-        if (this.getAntiPatternCodeOccurrences() != null) {
+        if (StringUtil.isNullOrEmpty(trimToEmpty(filter)) && this.getAntiPatternCodeOccurrences() != null) {
             List<AntiPatternCodeOccurrence> filteredOccurrences = this.getAntiPatternCodeOccurrences()
                     .stream()
                     .filter(occurrence -> {

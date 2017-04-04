@@ -6,8 +6,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class NoSuchInspectionException extends RuntimeException {
 
-    public NoSuchInspectionException(String message) {
-        super(message);
+    private static final String MESSAGE = "There is no such inspection.";
+
+    public NoSuchInspectionException() {
+        super(MESSAGE);
     }
 
 }

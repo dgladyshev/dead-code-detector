@@ -10,6 +10,7 @@ import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
 import com.scitools.understand.Database;
 import com.scitools.understand.Understand;
 import com.scitools.understand.UnderstandException;
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,28 +58,21 @@ public class CodeAnalyzerService {
         this.inspectionStateMachine = inspectionStateMachine;
     }
 
-
-    @Async
-    public void inspectCodeAsync(Long id) {
-        inspectCode(id);
-    }
-
     /**
      * Downloads git repository for given Inspection entities, creates .udb file and then searches for problems in code.
      * Returns nothings but changes state of Inspection entities on each step of processing.
      *
-     * @param id unique inspection id
+     * @param Inspection entity
      */
-    public Inspection inspectCode(Long id) {
-        Inspection inspection = inspectionsService.getInspection(id);
+    @Async
+    public void inspectCode(Inspection inspection) {
         GitRepo gitRepo = inspection.getGitRepo();
-        String inspectionDirPath = dataDir + "/" + id;
+        String inspectionDirPath = dataDir + "/" + inspection.getId();
         deleteDirectoryIfExists(inspectionDirPath);
         try {
             inspectionStateMachine.changeState(inspection, InspectionState.DOWNLOADING);
             gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch(), inspection.getUrl());
             inspectionStateMachine.changeState(inspection, InspectionState.IN_QUEUE);
-            CompletableFuture<Inspection> future = new CompletableFuture<>();
             executor.submit(() -> {
                 try {
                     inspectionStateMachine.changeState(inspection, InspectionState.PROCESSING);
@@ -92,13 +86,10 @@ public class CodeAnalyzerService {
                 } catch (IOException | ExecProcessException | UnderstandException | UnsatisfiedLinkError ex) {
                     inspectionStateMachine.fail(inspection, ex);
                 } finally {
-                    future.complete(inspection);
                 }
             });
-            return future.get();
-        } catch (GitAPIException | IOException | InterruptedException | ExecutionException ex) {
+        } catch (GitAPIException | IOException ex) {
             inspectionStateMachine.fail(inspection, ex);
-            return inspection;
         }
     }
 

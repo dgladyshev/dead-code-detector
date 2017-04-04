@@ -6,8 +6,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.FORBIDDEN)
 public class InspectionAlreadyExistsException extends RuntimeException {
 
-    public InspectionAlreadyExistsException(String message) {
-        super(message);
+    private static final String MESSAGE = "Inspection for that branch and that repository has "
+                                         + "already been created. Use inspections/refresh endpoint or "
+                                         + "choose another branch to inspect.";
+
+    public InspectionAlreadyExistsException() {
+        super(MESSAGE);
     }
 
 }

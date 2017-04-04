@@ -30,7 +30,7 @@ public class MatchDeadParametersRule extends MatchAbstractRule {
             occurrences.addAll(
                     Arrays.stream(methods)
                             .map(ref -> ref.ent())
-                            //.filter(method -> clazz.kind().name().contains("Abstract")) //TODO check
+                            //.filter(method -> clazz.kind().name().contains("Abstract")) //TODO remove @Value(dir)
                             .filter(method -> !(hasReference(method) && hasReferenceOnTheSameLine(clazz, method)))
                             .map(method -> processParams(method))
                             .flatMap(List::stream)
