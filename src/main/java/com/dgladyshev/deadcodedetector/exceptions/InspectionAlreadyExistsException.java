@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class InspectionAlreadyExistsException extends RuntimeException {
 
     private static final String MESSAGE = "Inspection for that branch and that repository has "
-                                         + "already been created. Use inspections/refresh endpoint or "
-                                         + "choose another branch to inspect.";
+            + "already been created. Use inspections/refresh endpoint or "
+            + "choose another branch to inspect.";
 
     public InspectionAlreadyExistsException() {
         super(MESSAGE);

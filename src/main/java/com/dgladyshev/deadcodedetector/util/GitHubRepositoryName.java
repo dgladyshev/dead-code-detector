@@ -3,10 +3,8 @@ package com.dgladyshev.deadcodedetector.util;
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +38,7 @@ public class GitHubRepositoryName {
             */
             Pattern.compile("https?://[^/]+@([^/]+)/([^/]+)/([^/]+)/?"),
             Pattern.compile("https?://([^/]+)/([^/]+)/([^/]+)/?"),
-            };
+    };
 
     /**
      * Create {@link GitHubRepositoryName} from URL

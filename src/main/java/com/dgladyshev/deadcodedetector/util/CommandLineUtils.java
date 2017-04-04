@@ -15,7 +15,8 @@ public final class CommandLineUtils {
 
     /**
      * Executes shell command with given arguments.
-     * @param cmd command
+     *
+     * @param cmd  command
      * @param args command arguments
      * @throws ExecProcessException if shell command failed to be executed or return non-zero error code
      */
@@ -27,7 +28,7 @@ public final class CommandLineUtils {
                     .withExpectedExitStatuses(0)
                     .run()
                     .getOutputString();
-        } catch (StartupException | TimeoutException ex)  {
+        } catch (StartupException | TimeoutException ex) {
             throw new ExecProcessException("Failed to execute shell command", ex);
         } catch (ExternalProcessFailureException ex) {
             throw new ExecProcessException(ex.getStderr(), ex);

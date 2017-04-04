@@ -1,5 +1,9 @@
 package com.dgladyshev.deadcodedetector.services;
 
+import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.checkFileContainsString;
+import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
+import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.getCanonicalPath;
+
 import com.dgladyshev.deadcodedetector.entities.AntiPatternCodeOccurrence;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
@@ -10,24 +14,18 @@ import com.dgladyshev.deadcodedetector.util.CommandLineUtils;
 import com.scitools.understand.Database;
 import com.scitools.understand.Understand;
 import com.scitools.understand.UnderstandException;
-import java.util.Collections;
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
-import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.*;
 
 @Slf4j
 @Service
@@ -46,15 +44,13 @@ public class CodeAnalyzerService {
     private long timeout;
 
     private final GitService gitService;
-    private final InspectionsService inspectionsService;
     private final InspectionStateMachine inspectionStateMachine;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Autowired
-    public CodeAnalyzerService(GitService gitService, InspectionsService inspectionsService,
+    public CodeAnalyzerService(GitService gitService,
                                InspectionStateMachine inspectionStateMachine) {
         this.gitService = gitService;
-        this.inspectionsService = inspectionsService;
         this.inspectionStateMachine = inspectionStateMachine;
     }
 
@@ -62,7 +58,7 @@ public class CodeAnalyzerService {
      * Downloads git repository for given Inspection entities, creates .udb file and then searches for problems in code.
      * Returns nothings but changes state of Inspection entities on each step of processing.
      *
-     * @param Inspection entity
+     * @param inspection entity
      */
     @Async
     public void inspectCode(Inspection inspection) {
@@ -85,7 +81,6 @@ public class CodeAnalyzerService {
                     inspectionStateMachine.complete(inspection, postProcessCodeOccurrences(codeOccurrences));
                 } catch (IOException | ExecProcessException | UnderstandException | UnsatisfiedLinkError ex) {
                     inspectionStateMachine.fail(inspection, ex);
-                } finally {
                 }
             });
         } catch (GitAPIException | IOException ex) {
@@ -99,7 +94,7 @@ public class CodeAnalyzerService {
         return antiPatternCodeOccurrences
                 .stream()
                 .filter(occurrence -> !(occurrence.getType().equalsIgnoreCase("Parameter")
-                                        && checkFileContainsString(occurrence.getFile(), "abstract class")))
+                        && checkFileContainsString(occurrence.getFile(), "abstract class")))
                 .filter(occurrence -> !occurrence.getName().contains("lambda"))
                 .filter(occurrence -> !occurrence.getName().contains(".valueOf.s"))
                 .collect(Collectors.toList());

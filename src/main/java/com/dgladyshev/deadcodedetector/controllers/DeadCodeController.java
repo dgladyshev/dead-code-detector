@@ -60,7 +60,7 @@ public class DeadCodeController {
 
     @PostMapping(value = "/inspections/refresh")
     public Mono<ResponseEntity<Void>> refreshInspection(@RequestParam String url,
-                                                              @RequestParam(defaultValue = "master") String branch) {
+                                                        @RequestParam(defaultValue = "master") String branch) {
         GitRepo gitRepo = new GitRepo(url);
         return inspectionsService
                 .getRefreshableInspection(
@@ -75,12 +75,12 @@ public class DeadCodeController {
     }
 
     @GetMapping(value = "/inspections")
-    public List<Inspection> getInspections(@RequestParam(required = false) Integer pageNumber,
-                                           @RequestParam(required = false) Integer pageSize) {
+    public List<Inspection> getInspections(@RequestParam(required = false) Long pageNumber,
+                                           @RequestParam(required = false) Long pageSize) {
         if (pageNumber != null && pageSize != null) {
             if (pageNumber < 1 || pageSize < 0) {
                 throw new MalformedRequestException("Page number must equal or bigger than 1,"
-                                                    + " page size must be bigger than 0");
+                        + " page size must be bigger than 0");
             } else {
                 //TODO add real pagination after it will be supported by reactive repository
                 //return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
@@ -97,8 +97,9 @@ public class DeadCodeController {
     }
 
     @GetMapping(value = "/inspections/{id}")
-    public Mono<ResponseEntity<Inspection>> getInspectionById(@PathVariable String id,
-                                                              @RequestParam(defaultValue = "", required = false) String filter) {
+    public Mono<ResponseEntity<Inspection>> getInspectionById(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "", required = false) String filter) {
         return inspectionsService.getInspection(id)
                 .map(inspection -> inspection.toFilteredInspection(filter))
                 //TODO throw exception which will result in code 404 instead

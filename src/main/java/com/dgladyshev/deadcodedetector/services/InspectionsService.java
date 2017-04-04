@@ -96,7 +96,7 @@ public class InspectionsService {
 
     public Mono<Void> deleteInspection(String id) throws NoSuchInspectionException, InspectionIsLockedException {
         return Mono.just(id)
-                .doOnNext(i -> {
+                .doOnNext(id1 -> {
                     if (inspectionsRepository.exists(id).block()) {
                         Inspection inspection = inspectionsRepository.findOne(id).block();
                         checkIfInspectionIsLocked(inspection); //to do on next
@@ -107,8 +107,8 @@ public class InspectionsService {
                         throw new NoSuchInspectionException();
                     }
                 })
-                .doOnError(e -> {
-                    throw Exceptions.propagate(e);
+                .doOnError(ex -> {
+                    throw Exceptions.propagate(ex);
                 })
                 .then();
     }
@@ -118,11 +118,11 @@ public class InspectionsService {
                 .map(Inspection::getState)
                 .filter(state -> !INSPECTION_COMPLETED_STATES.contains(state))
                 .doOnNext(state -> {
-                              throw new InspectionIsLockedException();
-                          }
+                            throw new InspectionIsLockedException();
+                            }
                 )
-                .doOnError(e -> {
-                    throw Exceptions.propagate(e);
+                .doOnError(ex -> {
+                    throw Exceptions.propagate(ex);
                 })
                 .block();
     }

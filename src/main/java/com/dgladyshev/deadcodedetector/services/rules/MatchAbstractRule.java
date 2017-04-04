@@ -8,9 +8,13 @@ import com.scitools.understand.Reference;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 
 @SuppressWarnings("PMD.NullAssignment")
 public abstract class MatchAbstractRule implements MatchRuleFunction {
+
+    @Value("${data.dir}")
+    private String dataDir;
 
     protected AntiPatternType antiPatternType;
 
@@ -29,7 +33,7 @@ public abstract class MatchAbstractRule implements MatchRuleFunction {
         return AntiPatternCodeOccurrence.builder()
                 .type(type)
                 .name(StringUtils.substringAfterLast(name, "."))
-                .file(file) //TODO .replace(inspectionCanonicalPath + "/", "")
+                .file(file.replace(dataDir + "/", "")) //TODO test this
                 .line(line)
                 .column(column)
                 .antiPatternType(antiPatternType)

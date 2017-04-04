@@ -28,8 +28,8 @@ public class GitService {
      * @throws NoSuchGitBranchException if there is no specified branch in the repository
      */
     public void downloadRepo(GitRepo gitRepo, String inspectionDirPath, String branch, String url) throws
-                                                                                                   GitAPIException,
-                                                                                                   IOException {
+            GitAPIException,
+            IOException {
         String repoPath = inspectionDirPath + "/" + gitRepo.getName();
         try {
             cloneRepo(url, repoPath, branch);

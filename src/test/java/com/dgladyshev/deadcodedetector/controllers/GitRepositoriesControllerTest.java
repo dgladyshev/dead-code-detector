@@ -23,6 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.unitils.reflectionassert.ReflectionAssert;
+import reactor.core.publisher.Flux;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,7 +34,7 @@ public class GitRepositoriesControllerTest {
 
     private static final Inspection EXPECTED_INSPECTION = Inspection
             .builder()
-            .id(123L)
+            .id("some-unique-id")
             .build();
 
     private static final String REPOSITORY_URL = "https://github.com/user/repo";
@@ -49,11 +50,11 @@ public class GitRepositoriesControllerTest {
     @Test
     public void testGetInspections() throws Exception {
         List<Inspection> expectedResult = Lists.newArrayList(EXPECTED_INSPECTION);
-        given(inspectionsService.getRepositoryInspections(any())).willReturn(expectedResult);
+        given(inspectionsService.getRepositoryInspections(any())).willReturn(Flux.just(EXPECTED_INSPECTION));
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections")
-                                 .param("url", REPOSITORY_URL)
-                                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                        .param("url", REPOSITORY_URL)
+                        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
         String jsonString = result.andReturn().getResponse().getContentAsString();
         List<Inspection> actualResult = mapper.readValue(jsonString, new TypeReference<List<Inspection>>() {
