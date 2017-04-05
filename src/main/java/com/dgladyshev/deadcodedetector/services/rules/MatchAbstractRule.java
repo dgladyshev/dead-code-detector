@@ -16,7 +16,7 @@ public abstract class MatchAbstractRule implements MatchRuleFunction {
     @Value("${data.dir}")
     private String dataDir;
 
-    private AntiPatternType antiPatternType;
+    private final AntiPatternType antiPatternType;
 
     MatchAbstractRule(AntiPatternType antiPatternType) {
         this.antiPatternType = antiPatternType;

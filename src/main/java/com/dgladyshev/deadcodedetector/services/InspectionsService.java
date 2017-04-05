@@ -117,7 +117,7 @@ public class InspectionsService {
                 .filter(state -> !INSPECTION_COMPLETED_STATES.contains(state))
                 .doOnNext(state -> {
                             throw new InspectionIsLockedException();
-                        }
+                            }
                 )
                 .doOnError(ex -> {
                     throw Exceptions.propagate(ex);

@@ -27,9 +27,9 @@ public class GitRepositoriesControllerTest {
 
     private static final String API_V1_REPOSITORIES = "/api/v1/repositories/";
 
-    private InspectionsService inspectionsService = mock(InspectionsService.class);
+    private final InspectionsService inspectionsService = mock(InspectionsService.class);
 
-    private WebTestClient client = WebTestClient
+    private final WebTestClient client = WebTestClient
             .bindToController(
                     new GitRepositoriesController(
                             inspectionsService

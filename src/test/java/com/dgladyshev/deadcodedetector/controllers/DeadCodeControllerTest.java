@@ -1,10 +1,10 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
 import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_BRANCH;
-import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_REPO;
 import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_ID;
 import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_INSPECTION;
 import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_LANGUAGE;
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_REPO;
 import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_REPO_URL;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -33,9 +33,9 @@ public class DeadCodeControllerTest {
 
     private static final String API_V1_INSPECTIONS = "/api/v1/inspections/";
 
-    private InspectionsService inspectionsService = mock(InspectionsService.class);
+    private final InspectionsService inspectionsService = mock(InspectionsService.class);
 
-    private WebTestClient client = WebTestClient
+    private final WebTestClient client = WebTestClient
             .bindToController(
                     new DeadCodeController(
                             mock(CodeAnalyzerService.class),
