@@ -24,8 +24,8 @@ public class MatchDeadMethodsRule extends MatchAbstractRule {
         Entity[] privateMethods = db.ents("method private ~constructor ~unknown ~unresolved");
         return Arrays.stream(privateMethods)
                 .filter(method -> !isCalled(method))
-                .map(method -> toReference(method))
-                .map(reference -> toAntiPatternCodeOccurrence(reference))
+                .map(this::toReference)
+                .map(this::toAntiPatternCodeOccurrence)
                 .collect(Collectors.toList());
     }
 

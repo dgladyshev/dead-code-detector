@@ -1,10 +1,15 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_BRANCH;
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_REPO;
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_ID;
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_INSPECTION;
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_LANGUAGE;
+import static com.dgladyshev.deadcodedetector.controllers.constants.ControllerExpectedEntities.EXPECTED_REPO_URL;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM;
 
-import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
@@ -24,21 +29,9 @@ import reactor.test.StepVerifier;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@SuppressWarnings("PMD.UnusedPrivateField")
 public class DeadCodeControllerTest {
 
-    private static final String EXPECTED_ID = "some-unique-id";
-    private static final String EXPECTED_REPO_URL = "https://github.com/dgladyshev/dead-code-detector.git";
-    private static final String EXPECTED_LANGUAGE = "JAVA";
-    private static final String EXPECTED_BRANCH = "master";
-
-    private static final Inspection EXPECTED_INSPECTION = Inspection
-            .builder()
-            .id(EXPECTED_ID)
-            .url(EXPECTED_REPO_URL)
-            .language(EXPECTED_LANGUAGE)
-            .branch(EXPECTED_BRANCH)
-            .build();
+    private static final String API_V1_INSPECTIONS = "/api/v1/inspections/";
 
     private InspectionsService inspectionsService = mock(InspectionsService.class);
 
@@ -54,10 +47,11 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testGetInspections() throws Exception {
-        //TODO test return of multiple items
-        given(inspectionsService.getInspections()).willReturn(Flux.just(EXPECTED_INSPECTION));
+        given(inspectionsService.getInspections()).willReturn(
+                Flux.just(EXPECTED_INSPECTION, EXPECTED_INSPECTION, EXPECTED_INSPECTION)
+        );
 
-        FluxExchangeResult<Inspection> result = client.get().uri("/api/v1/inspections")
+        FluxExchangeResult<Inspection> result = client.get().uri(API_V1_INSPECTIONS)
                 .accept(TEXT_EVENT_STREAM)
                 .exchange()
                 .expectStatus().isOk()
@@ -67,6 +61,8 @@ public class DeadCodeControllerTest {
 
         StepVerifier.create(result.getResponseBody())
                 .expectNext(EXPECTED_INSPECTION)
+                .expectNext(EXPECTED_INSPECTION)
+                .expectNextCount(1)
                 .thenCancel()
                 .verify();
     }
@@ -75,7 +71,7 @@ public class DeadCodeControllerTest {
     public void testGetInspectionById() throws Exception {
         given(inspectionsService.getInspection(EXPECTED_ID)).willReturn(Mono.just(EXPECTED_INSPECTION));
 
-        FluxExchangeResult<Inspection> result = client.get().uri("/api/v1/inspections/" + EXPECTED_ID)
+        FluxExchangeResult<Inspection> result = client.get().uri(API_V1_INSPECTIONS + EXPECTED_ID)
                 .accept(TEXT_EVENT_STREAM)
                 .exchange()
                 .expectStatus().isOk()
@@ -93,11 +89,11 @@ public class DeadCodeControllerTest {
     public void testDeleteInspectionById() throws Exception {
         given(inspectionsService.deleteInspection(EXPECTED_ID)).willReturn(Mono.empty());
 
-        FluxExchangeResult<Inspection> result = client.delete().uri("/api/v1/inspections/" + EXPECTED_ID)
+        FluxExchangeResult<Void> result = client.delete().uri(API_V1_INSPECTIONS + EXPECTED_ID)
                 .accept(TEXT_EVENT_STREAM)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(Inspection.class)
+                .expectBody(Void.class)
                 .returnResult();
 
         StepVerifier.create(result.getResponseBody())
@@ -108,17 +104,17 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        GitRepo gitRepo = new GitRepo(EXPECTED_REPO_URL);
         given(inspectionsService.createInspection(
-                gitRepo,
+                EXPECTED_REPO,
                 EXPECTED_LANGUAGE.toLowerCase(),
                 EXPECTED_BRANCH,
                 EXPECTED_REPO_URL
         )).willReturn(Mono.just(EXPECTED_INSPECTION));
+
         FluxExchangeResult<Inspection> result = client.post()
                 .uri(
                         new URIBuilder()
-                                .setPath("/api/v1/inspections/")
+                                .setPath(API_V1_INSPECTIONS)
                                 .setParameter("url", EXPECTED_REPO_URL)
                                 .setParameter("language", EXPECTED_LANGUAGE)
                                 .setParameter("branch", EXPECTED_BRANCH)

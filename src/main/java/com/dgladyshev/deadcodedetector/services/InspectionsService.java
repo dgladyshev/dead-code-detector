@@ -61,9 +61,7 @@ public class InspectionsService {
     public Mono<Inspection> getRefreshableInspection(GitRepo repo, String branch) {
         checkBranch(branch);
         return getInspection(repo, branch)
-                .doOnNext(
-                        inspection -> checkIfInspectionIsLocked(inspection)
-                );
+                .doOnNext(this::checkIfInspectionIsLocked);
     }
 
     //TODO validate in constructor as a separate entity
@@ -119,7 +117,7 @@ public class InspectionsService {
                 .filter(state -> !INSPECTION_COMPLETED_STATES.contains(state))
                 .doOnNext(state -> {
                             throw new InspectionIsLockedException();
-                            }
+                        }
                 )
                 .doOnError(ex -> {
                     throw Exceptions.propagate(ex);

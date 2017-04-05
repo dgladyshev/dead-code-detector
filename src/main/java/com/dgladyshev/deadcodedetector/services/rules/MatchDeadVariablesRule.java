@@ -25,8 +25,8 @@ public class MatchDeadVariablesRule extends MatchAbstractRule {
         Entity[] localVariables = db.ents("variable local");
         return Arrays.stream((Entity[]) ArrayUtils.addAll(privateVariables, localVariables))
                 .filter(method -> !isUsed(method))
-                .map(method -> toReference(method))
-                .map(reference -> toAntiPatternCodeOccurrence(reference))
+                .map(this::toReference)
+                .map(this::toAntiPatternCodeOccurrence)
                 .collect(Collectors.toList());
     }
 

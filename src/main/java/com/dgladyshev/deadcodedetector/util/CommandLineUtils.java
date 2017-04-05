@@ -18,6 +18,8 @@ public final class CommandLineUtils {
      *
      * @param cmd  command
      * @param args command arguments
+     *
+     * @return String returns shell command output
      * @throws ExecProcessException if shell command failed to be executed or return non-zero error code
      */
     public static String execProcess(String cmd, long timeoutMillis, String... args) throws ExecProcessException {

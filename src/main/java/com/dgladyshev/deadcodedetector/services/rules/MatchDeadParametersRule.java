@@ -28,10 +28,10 @@ public class MatchDeadParametersRule extends MatchAbstractRule {
             Reference[] methods = clazz.refs("~unresolved ~unknown", "method", true);
             occurrences.addAll(
                     Arrays.stream(methods)
-                            .map(ref -> ref.ent())
+                            .map(Reference::ent)
                             //.filter(method -> clazz.kind().name().contains("Abstract")) //TODO remove @Value(dir)
                             .filter(method -> !(hasReference(method) && hasReferenceOnTheSameLine(clazz, method)))
-                            .map(method -> processParams(method))
+                            .map(this::processParams)
                             .flatMap(List::stream)
                             .collect(Collectors.toSet())
             );
@@ -42,18 +42,18 @@ public class MatchDeadParametersRule extends MatchAbstractRule {
     private List<AntiPatternCodeOccurrence> processParams(Entity method) {
         Reference[] methodReferences = method.refs("~unresolved ~unknown ~catch", "parameter", true);
         return Arrays.stream(methodReferences)
-                .map(reference -> reference.ent())
+                .map(Reference::ent)
                 .filter(parameter -> !isUsed(parameter))
-                .map(parameter -> toReference(parameter))
-                .map(reference -> toAntiPatternCodeOccurrence(reference))
+                .map(this::toReference)
+                .map(this::toAntiPatternCodeOccurrence)
                 .collect(Collectors.toList());
     }
 
-    boolean hasReference(Entity ent) {
+    private boolean hasReference(Entity ent) {
         return toReference(ent) != null;
     }
 
-    boolean hasReferenceOnTheSameLine(Entity ent1, Entity ent2) {
+    private boolean hasReferenceOnTheSameLine(Entity ent1, Entity ent2) {
         Reference reference1 = toReference(ent1);
         Reference reference2 = toReference(ent2);
         return reference1 != null && reference2 != null && reference1.line() == reference2.line();
