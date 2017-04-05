@@ -2,6 +2,7 @@ package com.dgladyshev.deadcodedetector.services;
 
 import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.time.DateUtils.MILLIS_PER_MINUTE;
 
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
@@ -16,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +43,29 @@ public class InspectionsService {
     @Autowired
     private InspectionStateMachine inspectionStateMachine;
 
+    @Autowired
+    CodeAnalyzerService codeAnalyzerService;
+
+    @PostConstruct
+    void checkPossiblyStuckInspections() {
+        Set<Inspection> notCompleted = inspectionsRepository.findAllByStateNotContains(InspectionState.COMPLETED);
+        Set<Inspection> failed = inspectionsRepository.findAllByStateContains(InspectionState.FAILED);
+        notCompleted.removeAll(failed);
+        notCompleted
+                .stream()
+                .filter(inspection ->
+                        //TODO move constant to settings
+                        System.currentTimeMillis() - inspection.getTimestampInspectionCreated() > 10 * MILLIS_PER_MINUTE
+                )
+                .forEach(inspection -> codeAnalyzerService.inspectCode(inspection));
+    }
+
     public Inspection createInspection(GitRepo repo, String language, String branch, String url) {
         checkBranch(branch);
         if (isInspectionExists(repo, branch)) {
             throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "
-                                                       + "already been created. Use inspections/refresh endpoint or "
-                                                       + "choose another branch to inspect.");
+                    + "already been created. Use inspections/refresh endpoint or "
+                    + "choose another branch to inspect.");
         }
         Inspection inspection = new Inspection(repo, language, branch, url);
         inspectionStateMachine.changeState(inspection, InspectionState.ADDED);
@@ -61,7 +80,7 @@ public class InspectionsService {
     }
 
     private boolean isInspectionExists(GitRepo repo, String branch) {
-        return inspectionsRepository.findByGitRepo(repo)
+        return this.getRepositoryInspections(repo)
                 .stream()
                 .map(Inspection::getBranch)
                 .anyMatch(branch::equalsIgnoreCase);
@@ -91,12 +110,12 @@ public class InspectionsService {
 
     //TODO add endpoint for this
     private Inspection getInspection(GitRepo repo, String branch) {
-        return inspectionsRepository.findByGitRepo(repo)
+        return this.getRepositoryInspections(repo)
                 .stream()
                 .filter(inspection -> branch.equalsIgnoreCase(inspection.getBranch()))
                 .findAny()
                 .orElseThrow(() -> new NoSuchInspectionException("There is no inspection with specified"
-                                                                 + " url and branch."));
+                        + " url and branch."));
     }
 
     public void deleteInspection(Long id) throws NoSuchInspectionException, InspectionIsLockedException {
@@ -121,8 +140,12 @@ public class InspectionsService {
         }
     }
 
-    public List<Inspection> getRepositoryInspections(GitRepo gitRepo) throws NoSuchRepositoryException {
-        return inspectionsRepository.findByGitRepo(gitRepo);
+    public List<Inspection> getRepositoryInspections(GitRepo repo) throws NoSuchRepositoryException {
+        return inspectionsRepository.findByGitRepo_Name_AndGitRepo_User_AndGitRepo_Host(
+                repo.getName(),
+                repo.getUser(),
+                repo.getHost()
+        );
     }
 
 }

@@ -64,7 +64,7 @@ public class DeadCodeControllerTest {
         given(inspectionsService.getInspections()).willReturn(Lists.newArrayList(EXPECTED_INSPECTION));
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/inspections")
-                                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
         ReflectionAssert.assertReflectionEquals(
                 Lists.newArrayList(EXPECTED_INSPECTION),
@@ -78,7 +78,7 @@ public class DeadCodeControllerTest {
         given(inspectionsService.getInspection(inspectionId)).willReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/inspections/" + inspectionId)
-                                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                        .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
         ReflectionAssert.assertReflectionEquals(
                 EXPECTED_INSPECTION,
@@ -89,7 +89,7 @@ public class DeadCodeControllerTest {
     @Test
     public void testDeleteInspectionById() throws Exception {
         this.mockMvc.perform(delete("/api/v1/inspections/" + EXPECTED_INSPECTION.getId())
-                                     .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
     }
 
@@ -97,11 +97,11 @@ public class DeadCodeControllerTest {
     public void testAddInspectionById() throws Exception {
         when(inspectionsService.createInspection(any(), any(), any(), any())).thenReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc.perform(post("/api/v1/inspections")
-                                                            .param("url",
-                                                                   "https://github.com/dgladyshev/dead-code-detector.git")
-                                                            .param("language", "JAVA")
-                                                            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
-                                                            .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .param("url",
+                        "https://github.com/dgladyshev/dead-code-detector.git")
+                .param("language", "JAVA")
+                .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+                .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
         ReflectionAssert.assertReflectionEquals(
                 EXPECTED_INSPECTION,

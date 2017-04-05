@@ -57,7 +57,7 @@ public class DeadCodeController {
                 language.getName(), trimToEmpty(branch),
                 trimToEmpty(url)
         );
-        codeAnalyzerService.inspectCodeAsync(inspection.getId());
+        codeAnalyzerService.inspectCode(inspection);
         return inspection;
     }
 
@@ -71,7 +71,7 @@ public class DeadCodeController {
         log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
         GitRepo gitRepo = new GitRepo(url);
         Inspection inspection = inspectionsService.getRefreshableInspection(gitRepo, trimToEmpty(branch));
-        codeAnalyzerService.inspectCodeAsync(inspection.getId());
+        codeAnalyzerService.inspectCode(inspection);
     }
 
     @RequestMapping(
@@ -84,7 +84,7 @@ public class DeadCodeController {
         if (pageNumber != null && pageSize != null) {
             if (pageNumber < 1 || pageSize < 0) {
                 throw new MalformedRequestException("Page number must equal or bigger than 1,"
-                                                    + " page size must be bigger than 0");
+                        + " page size must be bigger than 0");
             } else {
                 return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
             }
@@ -102,8 +102,8 @@ public class DeadCodeController {
                                         @RequestParam(defaultValue = "", required = false) String filter) {
         Inspection inspection = inspectionsService.getInspection(id);
         return (StringUtils.isEmptyOrNull(filter))
-               ? inspection
-               : inspection.toFilteredInspection(filter);
+                ? inspection
+                : inspection.toFilteredInspection(filter);
     }
 
     @RequestMapping(

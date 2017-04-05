@@ -50,7 +50,7 @@ public final class GitHubRepoNameMatchers {
 
     public static Matcher<GitHubRepositoryName> withUserName(String username) {
         return new FeatureMatcher<GitHubRepositoryName, String>(is(username), "with username",
-                                                                "username") {
+                "username") {
             @Override
             protected String featureValueOf(GitHubRepositoryName repo) {
                 return repo.getUserName();
@@ -60,7 +60,7 @@ public final class GitHubRepoNameMatchers {
 
     public static Matcher<GitHubRepositoryName> withRepoName(String reponame) {
         return new FeatureMatcher<GitHubRepositoryName, String>(is(reponame), "with reponame",
-                                                                "reponame") {
+                "reponame") {
             @Override
             protected String featureValueOf(GitHubRepositoryName repo) {
                 return repo.getRepositoryName();

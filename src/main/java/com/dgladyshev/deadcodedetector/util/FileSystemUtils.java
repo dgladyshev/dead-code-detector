@@ -1,11 +1,10 @@
 package com.dgladyshev.deadcodedetector.util;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 @Slf4j
 public final class FileSystemUtils {
@@ -15,6 +14,7 @@ public final class FileSystemUtils {
 
     /**
      * Silently deletes directory if it exists.
+     *
      * @param dir path ot dir
      */
     public static void deleteDirectoryIfExists(String dir) {

@@ -1,18 +1,22 @@
 package com.dgladyshev.deadcodedetector.entities;
 
 import com.dgladyshev.deadcodedetector.util.GitHubRepositoryName;
-import javax.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.neo4j.ogm.annotation.GraphId;
+import org.neo4j.ogm.annotation.NodeEntity;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Data
-@Embeddable
+@NodeEntity
 public class GitRepo {
+
+    @GraphId
+    private Long id;
 
     private String name;
     private String user;

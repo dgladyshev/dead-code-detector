@@ -1,17 +1,21 @@
 package com.dgladyshev.deadcodedetector.entities;
 
-import javax.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.neo4j.ogm.annotation.GraphId;
+import org.neo4j.ogm.annotation.NodeEntity;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-@Embeddable
+@NodeEntity
 public class AntiPatternCodeOccurrence {
+
+    @GraphId
+    private Long id;
 
     private AntiPatternType antiPatternType;
     private String type;
