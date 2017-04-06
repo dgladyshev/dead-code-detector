@@ -5,24 +5,26 @@ import static org.apache.commons.lang.StringUtils.trimToEmpty;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.entities.SupportedLanguages;
-import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import java.util.Collection;
+import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
+@Validated
 @RequestMapping("/api/v1/")
 public class DeadCodeController {
 
@@ -39,11 +41,7 @@ public class DeadCodeController {
         this.urlCheckerService = urlCheckerService;
     }
 
-    @RequestMapping(
-            value = "/inspections",
-            method = RequestMethod.POST,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
+    @PostMapping(value = "/inspections")
     public Inspection addInspection(@RequestParam String url,
                                     @RequestParam SupportedLanguages language,
                                     @RequestParam(defaultValue = "master") String branch) {
@@ -61,11 +59,7 @@ public class DeadCodeController {
         return inspection;
     }
 
-    @RequestMapping(
-            value = "/inspections/refresh",
-            method = RequestMethod.POST,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
+    @PostMapping(value = "/inspections/refresh")
     public void refreshInspection(@RequestParam String url,
                                   @RequestParam(defaultValue = "master") String branch) {
         log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
@@ -74,30 +68,15 @@ public class DeadCodeController {
         codeAnalyzerService.inspectCode(inspection);
     }
 
-    @RequestMapping(
-            value = "/inspections",
-            method = RequestMethod.GET,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public Collection<Inspection> getInspections(@RequestParam(required = false) Integer pageNumber,
-                                                 @RequestParam(required = false) Integer pageSize) {
-        if (pageNumber != null && pageSize != null) {
-            if (pageNumber < 1 || pageSize < 0) {
-                throw new MalformedRequestException("Page number must equal or bigger than 1,"
-                        + " page size must be bigger than 0");
-            } else {
-                return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
-            }
-        } else {
-            return inspectionsService.getInspections();
-        }
+    @GetMapping(value = "/inspections")
+    public Collection<Inspection> getInspections(@Min(value = 1) @RequestParam(required = false) Integer pageNumber,
+                                                 @Min(value = 0) @RequestParam(required = false) Integer pageSize) {
+        return pageNumber != null && pageSize != null
+                ? inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize)
+                : inspectionsService.getInspections();
     }
 
-    @RequestMapping(
-            value = "/inspections/{id}",
-            method = RequestMethod.GET,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
+    @GetMapping(value = "/inspections/{id}")
     public Inspection getInspectionById(@PathVariable Long id,
                                         @RequestParam(defaultValue = "", required = false) String filter) {
         Inspection inspection = inspectionsService.getInspection(id);
@@ -106,11 +85,7 @@ public class DeadCodeController {
                 : inspection.toFilteredInspection(filter);
     }
 
-    @RequestMapping(
-            value = "/inspections/{id}",
-            method = RequestMethod.DELETE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
+    @DeleteMapping(value = "/inspections/{id}")
     public void deleteInspectionById(@PathVariable Long id) {
         inspectionsService.deleteInspection(id);
     }
