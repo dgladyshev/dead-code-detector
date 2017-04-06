@@ -76,7 +76,7 @@ public class CodeAnalyzerService {
         deleteDirectoryIfExists(inspectionDirPath);
         try {
             inspectionStateMachine.changeState(inspection, InspectionState.DOWNLOADING);
-            gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch(), inspection.getUrl());
+            gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch());
             inspectionStateMachine.changeState(inspection, InspectionState.IN_QUEUE);
             CompletableFuture<Inspection> future = new CompletableFuture<>();
             executor.submit(() -> {

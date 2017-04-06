@@ -24,7 +24,6 @@ public class Inspection {
     private Long id;
     @Relationship(type = "INSPECT_IN", direction = Relationship.UNDIRECTED)
     private GitRepo gitRepo;
-    private String url;
     private String language;
     private String branch;
     private InspectionState state;
@@ -37,11 +36,10 @@ public class Inspection {
     @Relationship(type = "OCCUR_IN", direction = Relationship.UNDIRECTED)
     private List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences;
 
-    public Inspection(GitRepo gitRepo, String language, String branch, String url) {
+    public Inspection(GitRepo gitRepo, String language, String branch) {
         this.gitRepo = gitRepo;
         this.language = language;
         this.branch = branch;
-        this.url = url;
     }
 
     //returns filtered representation of inspection

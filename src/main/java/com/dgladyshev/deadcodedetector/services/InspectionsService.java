@@ -1,7 +1,6 @@
 package com.dgladyshev.deadcodedetector.services;
 
 import static com.dgladyshev.deadcodedetector.util.FileSystemUtils.deleteDirectoryIfExists;
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
 import static org.apache.commons.lang3.time.DateUtils.MILLIS_PER_MINUTE;
 
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
@@ -9,7 +8,6 @@ import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.entities.InspectionState;
 import com.dgladyshev.deadcodedetector.exceptions.InspectionAlreadyExistsException;
 import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
-import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchRepositoryException;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
@@ -19,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -60,20 +57,18 @@ public class InspectionsService {
                 .forEach(inspection -> codeAnalyzerService.inspectCode(inspection));
     }
 
-    public Inspection createInspection(GitRepo repo, String language, String branch, String url) {
-        checkBranch(branch);
+    public Inspection createInspection(GitRepo repo, String language, String branch) {
         if (isInspectionExists(repo, branch)) {
             throw new InspectionAlreadyExistsException("Inspection for that branch and that repository has "
                     + "already been created. Use inspections/refresh endpoint or "
                     + "choose another branch to inspect.");
         }
-        Inspection inspection = new Inspection(repo, language, branch, url);
+        Inspection inspection = new Inspection(repo, language, branch);
         inspectionStateMachine.changeState(inspection, InspectionState.ADDED);
         return inspectionsRepository.save(inspection);
     }
 
     public Inspection getRefreshableInspection(GitRepo repo, String branch) {
-        checkBranch(branch);
         Inspection inspection = getInspection(repo, branch);
         checkIfInspectionIsLocked(inspection.getId());
         return inspection;
@@ -84,12 +79,6 @@ public class InspectionsService {
                 .stream()
                 .map(Inspection::getBranch)
                 .anyMatch(branch::equalsIgnoreCase);
-    }
-
-    private void checkBranch(String branch) throws MalformedRequestException {
-        if (StringUtils.isEmptyOrNull(trimToEmpty(branch))) {
-            throw new MalformedRequestException("Branch name is empty");
-        }
     }
 
     public List<Inspection> getInspections() {
