@@ -95,10 +95,9 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testAddInspectionById() throws Exception {
-        when(inspectionsService.createInspection(any(), any(), any(), any())).thenReturn(EXPECTED_INSPECTION);
+        when(inspectionsService.createInspection(any(), any(), any())).thenReturn(EXPECTED_INSPECTION);
         ResultActions result = this.mockMvc.perform(post("/api/v1/inspections")
-                .param("url",
-                        "https://github.com/dgladyshev/dead-code-detector.git")
+                .param("repositoryUrl", "https://github.com/dgladyshev/dead-code-detector.git")
                 .param("language", "JAVA")
                 .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))

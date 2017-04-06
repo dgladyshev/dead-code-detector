@@ -1,11 +1,9 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
-
 import com.dgladyshev.deadcodedetector.entities.Branch;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
-import com.dgladyshev.deadcodedetector.entities.SupportedLanguages;
+import com.dgladyshev.deadcodedetector.entities.Language;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
@@ -69,31 +67,24 @@ public class DeadCodeController {
     })
     @PostMapping(value = "/inspections")
     public Inspection addInspection(
-            @ApiIgnore @Valid @ModelAttribute(name = "repositoryUrl") GitRepo repo,
-            @ApiIgnore @ModelAttribute SupportedLanguages language,
-            @ApiIgnore @Valid @ModelAttribute(name = "branch") Branch branch) {
-        //TODO consider creating an interface
+            @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo repo,
+            @ApiIgnore @Valid @ModelAttribute("language") Language language,
+            @ApiIgnore @Valid @ModelAttribute("branch") Branch branch) {
         urlCheckerService.checkAccessibility(repo.getUrl());
         Inspection inspection = inspectionsService.createInspection(
                 repo,
-                language.name(),
+                language.getName(),
                 branch.getName()
         );
         codeAnalyzerService.inspectCode(inspection);
         return inspection;
     }
 
-    @ModelAttribute
-    public SupportedLanguages supportedLanguages(@RequestParam("language") String language) {
-        return SupportedLanguages.fromName(language);
-    }
-
     @PostMapping(value = "/inspections/refresh")
-    public void refreshInspection(@RequestParam String url,
-                                  @RequestParam(defaultValue = "master") String branch) {
-        log.info("Incoming request for refreshing an inspection, url: {}, branch: {}", url, branch);
-        GitRepo gitRepo = new GitRepo(url);
-        Inspection inspection = inspectionsService.getRefreshableInspection(gitRepo, trimToEmpty(branch));
+    public void refreshInspection(
+            @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo repo,
+            @ApiIgnore @Valid @ModelAttribute("branch") Branch branch) {
+        Inspection inspection = inspectionsService.getRefreshableInspection(repo, branch.getName());
         codeAnalyzerService.inspectCode(inspection);
     }
 
@@ -120,4 +111,3 @@ public class DeadCodeController {
     }
 
 }
-

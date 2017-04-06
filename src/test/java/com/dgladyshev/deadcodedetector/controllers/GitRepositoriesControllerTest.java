@@ -52,7 +52,7 @@ public class GitRepositoriesControllerTest {
         given(inspectionsService.getRepositoryInspections(any())).willReturn(expectedResult);
         ResultActions result = this.mockMvc
                 .perform(get("/api/v1/repositories/inspections")
-                        .param("url", REPOSITORY_URL)
+                        .param("repositoryUrl", REPOSITORY_URL)
                         .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(status().isOk());
         String jsonString = result.andReturn().getResponse().getContentAsString();
