@@ -11,6 +11,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.sonarqube" version "2.2"
+}
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'spring-boot'
@@ -18,6 +22,7 @@ apply plugin: 'docker'
 apply plugin: 'checkstyle'
 apply plugin: 'findbugs'
 apply plugin: 'pmd'
+apply plugin: 'jacoco'
 
 checkstyle {
     toolVersion = "7.6"
@@ -30,6 +35,13 @@ findbugs {
     ignoreFailures = false
 }
 
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
 pmd {
     toolVersion = '5.5.4'
     ignoreFailures = false
@@ -37,10 +49,22 @@ pmd {
     rulePriority = 3
 }
 
-tasks.withType(FindBugs) {
+jacoco {
+    toolVersion = "0.7.6.201602180812"
+    reportsDir = file("$buildDir/reports/jacoco")
+}
+
+jacocoTestReport {
     reports {
-        xml.enabled = false
+        xml.enabled = true
         html.enabled = true
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Dead Code Detector"
+        property "sonar.projectKey", "com.dgladyshev.dead-code-detector"
     }
 }
 
