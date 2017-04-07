@@ -5,12 +5,11 @@ install: true
 addons:
   sonarqube:
     organization: dgladyshev-github
+    branches:
+          - v2_experimental_neo4j
   sonar:
     token:
       secure: qXuEc/xSfvJDl2xjsHa1XLJ4EClkfSZSi9O6qEF710y0Oebw5MgwQauxqikU7ZEzFMGjVpdW5/woF2IAAEs8SvgSSGwo2CFZ/V6PS44mNWJa/GoBPeYAeGC+tGiNIZLBGxqUR5nIxK18zZuw1vlDaIF8MLxj6kqIeAteuCNcxF/Z9vQJozFJ5MuC45b91X0RmMNfc02cd+fHY0v75eDrUufg7vBy6zeIudjWQSFVjuxqzMmZZEv+EXcC6yv7y/vPT8YJbs4RQZzBdoGvvOtGqAuFmEZiRhhXxxP5NUtWR72lZ2MYBoaFOiWl+Hvu04kG5IdLT/jXYSpQVLFPchD5zqQta2Z6kApxCQkr+f240vGrmMr3Q1Z20h9H+OsmcuoWXWdrjMLjTbTHT/2xsu93mXtmsSS3rOmGKazrjxbxJ58E6Irxj7rmfYZgdTft8DWdA0c3j6ElfM6tkytQDMFN7XHkA62JdTUU6J7yQKgJEwZk23sl2CYynygcm10J7Q2keipBNwaT6XCXdUANVl6BeXIXX6Og4z4655HzIqZCvJTfG8hYlS+nOUPGVvsgDHHIc0v6jXs/fcOLSVFvlH4LpjUyc70dwLPIk71j5KnVlLX9eW2EOMJflHbuFTlqPv/u0/KBB4gzF1ApeNHgNsq/XuTYC5pYNSV6xUo1miMMwz4=
-  branches:
-      - v2_experimental_neo4j
-      - master
 
 jdk:
 - oraclejdk8
