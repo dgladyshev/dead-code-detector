@@ -6,21 +6,29 @@ buildscript {
         mavenCentral()
         maven { url "https://repo.spring.io/snapshot" }
         maven { url "https://repo.spring.io/milestone" }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
         classpath('se.transmode.gradle:gradle-docker:1.2')
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.3"
     }
 }
 
+apply plugin: "org.sonarqube"
+apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
 //apply plugin: 'org.springframework.boot' //uncomment then stable version is out
+apply plugin: 'org.springframework.boot'
 apply plugin: 'docker'
 apply plugin: 'checkstyle'
 apply plugin: 'findbugs'
 apply plugin: 'pmd'
+apply plugin: 'jacoco'
 
 repositories {
     mavenCentral()
@@ -39,6 +47,13 @@ findbugs {
     ignoreFailures = false
 }
 
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
 pmd {
     toolVersion = '5.5.4'
     ignoreFailures = false
@@ -46,10 +61,22 @@ pmd {
     rulePriority = 3
 }
 
-tasks.withType(FindBugs) {
+jacoco {
+    toolVersion = "0.7.6.201602180812"
+    reportsDir = file("$buildDir/reports/jacoco")
+}
+
+jacocoTestReport {
     reports {
-        xml.enabled = false
+        xml.enabled = true
         html.enabled = true
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Dead Code Detector"
+        property "sonar.projectKey", "com.dgladyshev.dead-code-detector"
     }
 }
 
@@ -81,7 +108,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-webflux:+")
     compile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.50.0'
     compile 'io.springfox:springfox-swagger2:+'
-    compile 'io.springfox:springfox-swagger-ui:+'
+    compile 'io.springfox:springfox-swagger-ui:2.1.2'
     compile 'net.logstash.logback:logstash-logback-encoder:4.4'
     compile 'org.codehaus.groovy:groovy-all:2.4.4'
     compile "org.projectlombok:lombok:1.16.2"

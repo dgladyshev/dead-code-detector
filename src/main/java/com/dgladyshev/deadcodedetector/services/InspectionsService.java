@@ -15,6 +15,7 @@ import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
 import com.google.common.collect.Sets;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,24 @@ public class InspectionsService {
 
     @Autowired
     private InspectionsRepository inspectionsRepository;
+
+    @Autowired
+    CodeAnalyzerService codeAnalyzerService;
+
+    //TODO use not embedded mongo or remove this code
+    @PostConstruct
+    void checkPossiblyStuckInspections() {
+        Set<Inspection> notCompleted = inspectionsRepository.findAllByStateNotContains(InspectionState.COMPLETED);
+        Set<Inspection> failed = inspectionsRepository.findAllByStateContains(InspectionState.FAILED);
+        notCompleted.removeAll(failed);
+        notCompleted
+                .stream()
+                .filter(inspection ->
+                        //TODO move constant to settings
+                        System.currentTimeMillis() - inspection.getTimestampInspectionCreated() > 10 * MILLIS_PER_MINUTE
+                )
+                .forEach(inspection -> codeAnalyzerService.inspectCode(inspection));
+    }
 
     public Mono<Inspection> createInspection(GitRepo repo, String language, String branch, String url) {
         checkBranch(branch);
@@ -125,6 +144,12 @@ public class InspectionsService {
                 .block();
     }
 
+    public List<Inspection> getRepositoryInspections(GitRepo repo) throws NoSuchRepositoryException {
+        return inspectionsRepository.findByGitRepo_Name_AndGitRepo_User_AndGitRepo_Host(
+                repo.getName(),
+                repo.getUser(),
+                repo.getHost()
+        );
     public Flux<Inspection> getRepositoryInspections(GitRepo gitRepo) throws NoSuchRepositoryException {
         return inspectionsRepository.findByGitRepo(Mono.just(gitRepo));
     }

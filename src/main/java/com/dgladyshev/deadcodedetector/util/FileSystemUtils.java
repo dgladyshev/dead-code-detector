@@ -23,7 +23,7 @@ public final class FileSystemUtils {
             try {
                 FileUtils.deleteDirectory(file);
             } catch (IOException | IllegalArgumentException ex) {
-                log.error("There is no files to delete directory or deletion has failed {}", dir);
+                log.error("There is no files to delete directory or deletion has failed {}", dir, ex);
             }
         }
     }

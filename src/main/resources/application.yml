@@ -22,6 +22,8 @@ spring:
 
 data.dir: ./data
 scitools.dir: /Users/dgladyshev/scitools/bin/macosx #set to you local scitools path
+spring.data.neo4j.username: neo4j
+spring.data.neo4j.password: some_password
 
 ---
 spring:

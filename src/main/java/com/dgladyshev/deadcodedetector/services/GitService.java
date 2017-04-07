@@ -27,15 +27,16 @@ public class GitService {
      * @throws GitAPIException          if fails to download repository
      * @throws NoSuchGitBranchException if there is no specified branch in the repository
      */
-    public void downloadRepo(GitRepo gitRepo, String inspectionDirPath, String branch, String url) throws
-            GitAPIException,
-            IOException {
+    public void downloadRepo(GitRepo gitRepo, String inspectionDirPath, String branch)
+            throws GitAPIException, IOException {
         String repoPath = inspectionDirPath + "/" + gitRepo.getName();
+        String url = gitRepo.getUrl();
         try {
             cloneRepo(url, repoPath, branch);
         } catch (TransportException ex) {
             //TODO remove this when JGit will support HTTP 301 redirects
             //Issue: https://bugs.eclipse.org/bugs/show_bug.cgi?id=465167
+            log.error("Failed to download git repository, retrying...", ex);
             FileUtils.deleteDirectory(new File(repoPath));
             if (ex.getMessage().contains(": 301 Moved Permanently")) {
                 cloneRepo("https" + url.substring(4), repoPath, branch);

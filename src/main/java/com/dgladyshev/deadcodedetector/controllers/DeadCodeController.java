@@ -2,15 +2,26 @@ package com.dgladyshev.deadcodedetector.controllers;
 
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
+import com.dgladyshev.deadcodedetector.entities.Branch;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
-import com.dgladyshev.deadcodedetector.entities.SupportedLanguages;
+import com.dgladyshev.deadcodedetector.entities.Language;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import java.util.Collection;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,11 +30,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
+@Validated
 @RequestMapping("/api/v1/")
 public class DeadCodeController {
 
@@ -40,31 +53,49 @@ public class DeadCodeController {
         this.urlCheckerService = urlCheckerService;
     }
 
+    @ApiImplicitParams({
+            @ApiImplicitParam(
+                    name = "repositoryUrl",
+                    value = "Repository url",
+                    required = true,
+                    dataType = "string",
+                    paramType = "query"),
+            @ApiImplicitParam(
+                    name = "branch",
+                    value = "Branch name",
+                    required = false,
+                    dataType = "string",
+                    paramType = "query"),
+            @ApiImplicitParam(
+                    name = "language",
+                    value = "Language name",
+                    required = true,
+                    dataType = "string",
+                    paramType = "query")
+    })
     @PostMapping(value = "/inspections")
-    public Mono<Inspection> addInspection(@RequestParam String url,
-                                          @RequestParam SupportedLanguages language,
-                                          @RequestParam(defaultValue = "master") String branch) {
-        GitRepo gitRepo = new GitRepo(url);
-        urlCheckerService.checkAccessibility(
-                trimToEmpty(url).replace(".git", "")
-        );
+    public Mono<Inspection> addInspection(
+            @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo repo,
+            @ApiIgnore @Valid @ModelAttribute("language") Language language,
+            @ApiIgnore @Valid @ModelAttribute("branch") Branch branch) {
+        urlCheckerService.checkAccessibility(repo.getUrl());
         return inspectionsService
                 .createInspection(
-                        gitRepo,
-                        language.getName(), trimToEmpty(branch),
-                        trimToEmpty(url)
+                        repo,
+                        language.getName(),
+                        branch.getName()
                 )
                 .doOnSuccess(codeAnalyzerService::inspectCode);
     }
 
     @PostMapping(value = "/inspections/refresh")
-    public Mono<ResponseEntity<Void>> refreshInspection(@RequestParam String url,
-                                                        @RequestParam(defaultValue = "master") String branch) {
-        GitRepo gitRepo = new GitRepo(url);
+    public Mono<ResponseEntity<Void>> refreshInspection(
+            @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo gitRepo,
+            @ApiIgnore @Valid @ModelAttribute("branch") Branch branch) {
         return inspectionsService
                 .getRefreshableInspection(
                         gitRepo,
-                        trimToEmpty(branch) //TODO move to constructor if possible
+                        branch.getName()
                 )
                 .doOnSuccess(codeAnalyzerService::inspectCode)
                 //TODO throw exception which will result in code 404 instead
@@ -74,32 +105,23 @@ public class DeadCodeController {
     }
 
     @GetMapping(value = "/inspections")
-    public Flux<Inspection> getInspections(@RequestParam(required = false) Long pageNumber,
-                                           @RequestParam(required = false) Long pageSize) {
-        if (pageNumber != null && pageSize != null) {
-            if (pageNumber < 1 || pageSize < 0) {
-                throw new MalformedRequestException("Page number must equal or bigger than 1,"
-                        + " page size must be bigger than 0");
-            } else {
-                //TODO add real pagination after it will be supported by reactive repository
-                //return inspectionsService.getPaginatedInspections(pageNumber - 1, pageSize);
-                return Flux.fromStream(
-                        inspectionsService
-                                .getInspections()
-                                .skip((pageNumber - 1) * pageSize)
-                                .toStream()
-                                .limit(pageSize)
-                );
-            }
-        } else {
-            return inspectionsService.getInspections();
-        }
+    public Flux<Inspection> getInspections(@Min(value = 1) @RequestParam(required = false) Integer pageNumber,
+                                                 @Min(value = 0) @RequestParam(required = false) Integer pageSize) {
+        return pageNumber != null && pageSize != null
+                ? Flux.fromStream(
+                inspectionsService
+                        .getInspections()
+                        .skip((pageNumber - 1) * pageSize)
+                        .toStream()
+                        .limit(pageSize)
+        )
+                : inspectionsService.getInspections();
     }
 
     @GetMapping(value = "/inspections/{id}")
     public Mono<ResponseEntity<Inspection>> getInspectionById(
             @PathVariable String id,
-            @RequestParam(defaultValue = "", required = false) String filter) {
+            @RequestParam(required = false) String filter) {
         return inspectionsService.getInspection(id)
                 .map(inspection -> inspection.toFilteredInspection(filter))
                 //TODO throw exception which will result in code 404 instead
@@ -108,9 +130,8 @@ public class DeadCodeController {
     }
 
     @DeleteMapping(value = "/inspections/{id}")
-    public Mono<Void> deleteInspectionById(@PathVariable String id) { //TODO add NotNull somehow
+    public Mono<Void> deleteInspectionById(@NotEmpty @PathVariable String id) { //TODO test that annotation works
         return inspectionsService.deleteInspection(id);
     }
 
 }
-
