@@ -36,6 +36,7 @@ public class GitService {
         } catch (TransportException ex) {
             //TODO remove this when JGit will support HTTP 301 redirects
             //Issue: https://bugs.eclipse.org/bugs/show_bug.cgi?id=465167
+            log.error("Failed to download git repository, retrying...", ex);
             FileUtils.deleteDirectory(new File(repoPath));
             if (ex.getMessage().contains(": 301 Moved Permanently")) {
                 cloneRepo("https" + url.substring(4), repoPath, branch);

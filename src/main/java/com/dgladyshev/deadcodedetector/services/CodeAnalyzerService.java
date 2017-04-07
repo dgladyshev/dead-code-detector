@@ -175,7 +175,7 @@ public class CodeAnalyzerService {
                                     && ALLOWED_INSPECTION_TYPES.contains(elements[0])
                                     && !elements[1].contains("lambda")
                                     && !elements[1].contains(".valueOf.s")
-                                    && !(elements[0].equalsIgnoreCase("Parameter")
+                                    && !("Parameter".equalsIgnoreCase(elements[0])
                                     && checkFileContainsString(elements[2], "abstract class"))) {
                         return AntiPatternCodeOccurrence.builder()
                                 .type(elements[0])
