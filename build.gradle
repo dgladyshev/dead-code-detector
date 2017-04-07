@@ -4,6 +4,7 @@ buildscript {
     }
     repositories {
         mavenCentral()
+        maven { url 'https://repo.spring.io/libs-snapshot' }
         maven { url "https://repo.spring.io/snapshot" }
         maven { url "https://repo.spring.io/milestone" }
         maven {
@@ -11,24 +12,26 @@ buildscript {
         }
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
         classpath('se.transmode.gradle:gradle-docker:1.2')
         classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.3"
     }
 }
 
-apply plugin: "org.sonarqube"
 apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'java'
-apply plugin: 'io.spring.dependency-management'
-//apply plugin: 'org.springframework.boot' //uncomment then stable version is out
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'idea'
+apply plugin: "org.sonarqube"
 apply plugin: 'docker'
 apply plugin: 'checkstyle'
 apply plugin: 'findbugs'
 apply plugin: 'pmd'
 apply plugin: 'jacoco'
+
+version = '0.0.1'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -97,15 +100,12 @@ task buildDocker(type: Docker, dependsOn: build) {
 }
 
 
-//bootRun {} //uncomment then stable version is out
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+bootRun {}
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-web:+")
-    compile("org.springframework.boot:spring-boot-starter-data-mongodb-reactive:+")
-    compile("org.springframework.boot:spring-boot-starter-webflux:+")
+    compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    compile("org.springframework.boot:spring-boot-starter-webflux")
     compile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.50.0'
     compile 'io.springfox:springfox-swagger2:+'
     compile 'io.springfox:springfox-swagger-ui:2.1.2'
@@ -124,5 +124,5 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.3'
+    gradleVersion = '3.4'
 }

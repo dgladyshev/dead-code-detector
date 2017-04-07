@@ -54,6 +54,21 @@ public class CodeAnalyzerService {
         this.inspectionStateMachine = inspectionStateMachine;
     }
 
+    //TODO use not embedded mongo or remove this code
+    /*@PostConstruct
+    void checkPossiblyStuckInspections() {
+        Set<Inspection> notCompleted = inspectionsRepository.findAllByStateNotContains(InspectionState.COMPLETED);
+        Set<Inspection> failed = inspectionsRepository.findAllByStateContains(InspectionState.FAILED);
+        notCompleted.removeAll(failed);
+        notCompleted
+                .stream()
+                .filter(inspection ->
+                        //TODO move constant to settings
+                        System.currentTimeMillis() - inspection.getTimestampInspectionCreated() > 10 * MILLIS_PER_MINUTE
+                )
+                .forEach(inspection -> codeAnalyzerService.inspectCode(inspection));
+    }*/
+
     /**
      * Downloads git repository for given Inspection entities, creates .udb file and then searches for problems in code.
      * Returns nothings but changes state of Inspection entities on each step of processing.
@@ -67,7 +82,7 @@ public class CodeAnalyzerService {
         deleteDirectoryIfExists(inspectionDirPath);
         try {
             inspectionStateMachine.changeState(inspection, InspectionState.DOWNLOADING);
-            gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch(), inspection.getUrl());
+            gitService.downloadRepo(gitRepo, inspectionDirPath, inspection.getBranch());
             inspectionStateMachine.changeState(inspection, InspectionState.IN_QUEUE);
             executor.submit(() -> {
                 try {

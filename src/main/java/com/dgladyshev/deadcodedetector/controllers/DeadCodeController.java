@@ -1,38 +1,31 @@
 package com.dgladyshev.deadcodedetector.controllers;
 
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
-
 import com.dgladyshev.deadcodedetector.entities.Branch;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.entities.Language;
-import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
-import java.util.Collection;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import springfox.documentation.annotations.ApiIgnore;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import springfox.documentation.annotations.ApiIgnore;
 
 @Slf4j
 @RestController
@@ -106,15 +99,14 @@ public class DeadCodeController {
 
     @GetMapping(value = "/inspections")
     public Flux<Inspection> getInspections(@Min(value = 1) @RequestParam(required = false) Integer pageNumber,
-                                                 @Min(value = 0) @RequestParam(required = false) Integer pageSize) {
+                                           @Min(value = 0) @RequestParam(required = false) Integer pageSize) {
         return pageNumber != null && pageSize != null
                 ? Flux.fromStream(
                 inspectionsService
                         .getInspections()
                         .skip((pageNumber - 1) * pageSize)
                         .toStream()
-                        .limit(pageSize)
-        )
+                        .limit(pageSize))
                 : inspectionsService.getInspections();
     }
 
@@ -130,7 +122,7 @@ public class DeadCodeController {
     }
 
     @DeleteMapping(value = "/inspections/{id}")
-    public Mono<Void> deleteInspectionById(@NotEmpty @PathVariable String id) { //TODO test that annotation works
+    public Mono<Void> deleteInspectionById(@PathVariable String id) {
         return inspectionsService.deleteInspection(id);
     }
 

@@ -47,7 +47,7 @@ public class GitRepositoriesControllerTest {
                 .uri(
                         new URIBuilder()
                                 .setPath(API_V1_REPOSITORIES + "inspections")
-                                .setParameter("url", EXPECTED_REPO_URL)
+                                .setParameter("repositoryUrl", EXPECTED_REPO_URL)
                                 .build()
                 )
                 .accept(TEXT_EVENT_STREAM)

@@ -26,7 +26,6 @@ public class Inspection {
     @Id
     private String id;
     private GitRepo gitRepo;
-    private String url;
     private String language;
     private String branch;
     private InspectionState state;
@@ -38,12 +37,11 @@ public class Inspection {
     private List<String> deadCodeTypesFound;
     private List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences;
 
-    public Inspection(GitRepo gitRepo, String language, String branch, String url) {
+    public Inspection(GitRepo gitRepo, String language, String branch) {
         this.id = UUID.randomUUID().toString();
         this.gitRepo = gitRepo;
         this.language = language;
         this.branch = branch;
-        this.url = url;
     }
 
     //returns filtered representation of inspection

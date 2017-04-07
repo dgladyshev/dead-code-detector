@@ -107,15 +107,14 @@ public class DeadCodeControllerTest {
         given(inspectionsService.createInspection(
                 EXPECTED_REPO,
                 EXPECTED_LANGUAGE.toLowerCase(),
-                EXPECTED_BRANCH,
-                EXPECTED_REPO_URL
+                EXPECTED_BRANCH
         )).willReturn(Mono.just(EXPECTED_INSPECTION));
 
         FluxExchangeResult<Inspection> result = client.post()
                 .uri(
                         new URIBuilder()
                                 .setPath(API_V1_INSPECTIONS)
-                                .setParameter("url", EXPECTED_REPO_URL)
+                                .setParameter("repositoryUrl", EXPECTED_REPO_URL)
                                 .setParameter("language", EXPECTED_LANGUAGE)
                                 .setParameter("branch", EXPECTED_BRANCH)
                                 .build()

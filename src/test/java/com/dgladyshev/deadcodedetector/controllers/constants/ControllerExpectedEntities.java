@@ -13,7 +13,6 @@ public class ControllerExpectedEntities {
     public static final Inspection EXPECTED_INSPECTION = Inspection
             .builder()
             .id(EXPECTED_ID)
-            .url(EXPECTED_REPO_URL)
             .language(EXPECTED_LANGUAGE)
             .branch(EXPECTED_BRANCH)
             .gitRepo(EXPECTED_REPO)
