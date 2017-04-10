@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@SuppressWarnings("PMD.CommentSize")
 public class CodeAnalyzerService {
 
     @Autowired

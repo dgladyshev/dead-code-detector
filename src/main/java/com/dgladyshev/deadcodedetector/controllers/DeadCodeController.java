@@ -98,8 +98,8 @@ public class DeadCodeController {
     }
 
     @GetMapping(value = "/inspections")
-    public Flux<Inspection> getInspections(@Min(value = 1) @RequestParam(required = false) Integer pageNumber,
-                                           @Min(value = 0) @RequestParam(required = false) Integer pageSize) {
+    public Flux<Inspection> getInspections(@Min(value = 1) @RequestParam(required = false) Long pageNumber,
+                                           @Min(value = 0) @RequestParam(required = false) Long pageSize) {
         return pageNumber != null && pageSize != null
                 ? Flux.fromStream(
                 inspectionsService

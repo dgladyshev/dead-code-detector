@@ -29,7 +29,7 @@ public class CodeAnalyzerServiceIntegrationTest {
     @Autowired
     private GitService gitService;
 
-    @Test
+    @Test //TODO fix
     public void inspectCode() throws Exception {
         //        String url = "https://github.com/dgladyshev/sampleGradleProject";
         //        GitRepo gitRepo = new GitRepo(url);

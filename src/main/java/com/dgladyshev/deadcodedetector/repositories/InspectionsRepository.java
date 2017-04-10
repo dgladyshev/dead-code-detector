@@ -17,8 +17,8 @@ public interface InspectionsRepository extends ReactiveCrudRepository<Inspection
     Flux<Inspection> findByGitRepo_Name_AndGitRepo_User_AndGitRepo_Host(String name, String user, String
             host);
 
-//    Flux<Inspection> findAllByStateNotContains(InspectionState state);
-//
-//    Flux<Inspection> findAllByStateContains(InspectionState state);
+    //    Flux<Inspection> findAllByStateNotContains(InspectionState state);
+    //
+    //    Flux<Inspection> findAllByStateContains(InspectionState state);
 
 }

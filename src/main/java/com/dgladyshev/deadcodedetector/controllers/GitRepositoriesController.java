@@ -3,6 +3,7 @@ package com.dgladyshev.deadcodedetector.controllers;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
+import io.swagger.annotations.ApiImplicitParam;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,12 @@ public class GitRepositoriesController {
         this.inspectionsService = inspectionsService;
     }
 
+    @ApiImplicitParam(
+            name = "repositoryUrl",
+            value = "Repository url",
+            required = true,
+            dataType = "string",
+            paramType = "query")
     @GetMapping(value = "/repositories/inspections")
     public Flux<Inspection> getRepositoryInspections(
             @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo gitRepo) {
