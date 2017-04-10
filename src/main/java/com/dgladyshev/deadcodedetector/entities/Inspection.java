@@ -64,5 +64,17 @@ public class Inspection {
         }
     }
 
+    public static Inspection buildInspection(GitRepo repo, String language, String branch) {
+        return Inspection.builder()
+                .id(UUID.randomUUID().toString())
+                .gitRepo(repo)
+                .timestampInspectionCreated(System.currentTimeMillis())
+                .state(InspectionState.ADDED)
+                .stateDescription("Inspection created")
+                .language(language)
+                .branch(branch)
+                .build();
+    }
+
 }
 

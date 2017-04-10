@@ -11,7 +11,6 @@ import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
 import com.dgladyshev.deadcodedetector.exceptions.MalformedRequestException;
 import com.dgladyshev.deadcodedetector.exceptions.NoSuchInspectionException;
 import com.dgladyshev.deadcodedetector.repositories.InspectionsRepository;
-import com.dgladyshev.deadcodedetector.util.InspectionUtils;
 import com.google.common.collect.Sets;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +43,7 @@ public class InspectionsService {
         if (isInspectionExists(repo, branch)) {
             throw new InspectionAlreadyExistsException();
         }
-        Inspection inspection = InspectionUtils.createInspection(repo, language, branch);
+        Inspection inspection = Inspection.buildInspection(repo, language, branch);
         return inspectionsRepository.save(inspection);
     }
 

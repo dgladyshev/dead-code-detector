@@ -2,17 +2,24 @@ package com.dgladyshev.deadcodedetector.entities;
 
 public enum InspectionState {
 
-    ADDED("ADDED"),
-    DOWNLOADING("DOWNLOADING"),
-    IN_QUEUE("IN_QUEUE"),
-    PROCESSING("PROCESSING"),
-    COMPLETED("COMPLETED"),
-    FAILED("FAILED");
+    ADDED("ADDED", "Inspection created"),
+    DOWNLOADING("DOWNLOADING", "Downloading git repository"),
+    IN_QUEUE("IN_QUEUE", "Request to analyze repository has been added to a queue"),
+    PROCESSING("PROCESSING", "Analyzing git repository and searching for dead code occurrences"),
+    COMPLETED("COMPLETED", "Processing completed"),
+    FAILED("FAILED", "Inspection failed");
 
-    private String status;
+    private String state;
 
-    InspectionState(String status) {
-        this.status = status;
+    private String description;
+
+    InspectionState(String state, String description) {
+        this.state = state;
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
 }

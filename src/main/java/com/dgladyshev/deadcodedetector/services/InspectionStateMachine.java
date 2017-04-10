@@ -17,7 +17,12 @@ public class InspectionStateMachine {
     private InspectionsService inspectionsService;
 
     public void changeState(Inspection inspection, InspectionState state) {
+        changeState(inspection, state, null);
+    }
+
+    private void changeState(Inspection inspection, InspectionState state, Object argument) {
         inspection.setState(state);
+        inspection.setStateDescription(state.getDescription());
         switch (state) {
             case DOWNLOADING:
                 inspection.setAntiPatternCodeOccurrences(null);
@@ -25,24 +30,34 @@ public class InspectionStateMachine {
                 inspection.setTimeSpentAnalyzingMillis(null);
                 inspection.setTimestampAnalysisStart(null);
                 inspection.setTimestampAnalysisFinished(null);
-                inspection.setStateDescription("Downloading git repository");
                 break;
             case IN_QUEUE:
-                inspection.setStateDescription("Request to analyze repository has been added to a queue");
                 break;
             case PROCESSING:
                 inspection.setTimestampAnalysisStart(System.currentTimeMillis());
-                inspection.setStateDescription("Analyzing git repository and searching for dead code occurrences");
                 break;
             case COMPLETED:
                 inspection.setTimestampAnalysisFinished(System.currentTimeMillis());
                 inspection.setTimeSpentAnalyzingMillis(
                         inspection.getTimestampAnalysisFinished() - inspection.getTimestampAnalysisStart()
                 );
-                inspection.setStateDescription("Processing completed");
+                List<AntiPatternCodeOccurrence> codeOccurrences = (List<AntiPatternCodeOccurrence>) argument;
+                inspection.setAntiPatternCodeOccurrences(codeOccurrences);
+                inspection.setDeadCodeTypesFound(
+                        codeOccurrences
+                                .stream()
+                                .map(AntiPatternCodeOccurrence::getType)
+                                .distinct()
+                                .sorted(String::compareTo)
+                                .collect(Collectors.toList())
+                );
                 break;
             case FAILED:
                 inspection.setTimestampAnalysisFinished(System.currentTimeMillis());
+                Throwable ex = (Throwable) argument;
+                log.error("Error occurred for inspection id: {}. Error: {}", inspection.getId(), ex);
+                String stateDescription = ex.getMessage() + ". " + ex.getCause();
+                inspection.setStateDescription(stateDescription);
                 break;
             default:
                 break;
@@ -51,22 +66,11 @@ public class InspectionStateMachine {
     }
 
     public void complete(Inspection inspection, List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences) {
-        inspection.setAntiPatternCodeOccurrences(antiPatternCodeOccurrences);
-        inspection.setDeadCodeTypesFound(
-                antiPatternCodeOccurrences
-                        .stream()
-                        .map(AntiPatternCodeOccurrence::getType)
-                        .distinct()
-                        .sorted(String::compareTo)
-                        .collect(Collectors.toList())
-        );
-        changeState(inspection, InspectionState.COMPLETED);
+        changeState(inspection, InspectionState.COMPLETED, antiPatternCodeOccurrences);
     }
 
     public void fail(Inspection inspection, Throwable ex) {
-        log.error("Error occurred for inspection id: {}. Error: {}", inspection.getId(), ex);
-        inspection.setStateDescription(ex.getMessage() + ". " + ex.getCause());
-        changeState(inspection, InspectionState.FAILED);
+        changeState(inspection, InspectionState.FAILED, ex);
     }
 
 }
