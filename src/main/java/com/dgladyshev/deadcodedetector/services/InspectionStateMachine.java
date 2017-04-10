@@ -31,8 +31,6 @@ public class InspectionStateMachine {
                 inspection.setTimestampAnalysisStart(null);
                 inspection.setTimestampAnalysisFinished(null);
                 break;
-            case IN_QUEUE:
-                break;
             case PROCESSING:
                 inspection.setTimestampAnalysisStart(System.currentTimeMillis());
                 break;
