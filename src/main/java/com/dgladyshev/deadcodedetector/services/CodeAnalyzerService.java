@@ -109,7 +109,7 @@ public class CodeAnalyzerService {
             List<AntiPatternCodeOccurrence> antiPatternCodeOccurrences) {
         return antiPatternCodeOccurrences
                 .stream()
-                .filter(occurrence -> !(occurrence.getType().equalsIgnoreCase("Parameter")
+                .filter(occurrence -> !("Parameter".equalsIgnoreCase(occurrence.getType())
                         && checkFileContainsString(occurrence.getFile(), "abstract class")))
                 .filter(occurrence -> !occurrence.getName().contains("lambda"))
                 .filter(occurrence -> !occurrence.getName().contains(".valueOf.s"))
