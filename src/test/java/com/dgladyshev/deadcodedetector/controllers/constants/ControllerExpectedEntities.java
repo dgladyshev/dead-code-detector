@@ -2,6 +2,7 @@ package com.dgladyshev.deadcodedetector.controllers.constants;
 
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
+import com.dgladyshev.deadcodedetector.entities.InspectionState;
 
 public class ControllerExpectedEntities {
 
@@ -16,6 +17,7 @@ public class ControllerExpectedEntities {
             .language(EXPECTED_LANGUAGE)
             .branch(EXPECTED_BRANCH)
             .gitRepo(EXPECTED_REPO)
+            .state(InspectionState.FAILED)
             .build();
 
 }

@@ -4,6 +4,7 @@ import com.dgladyshev.deadcodedetector.entities.Branch;
 import com.dgladyshev.deadcodedetector.entities.GitRepo;
 import com.dgladyshev.deadcodedetector.entities.Inspection;
 import com.dgladyshev.deadcodedetector.entities.Language;
+import com.dgladyshev.deadcodedetector.exceptions.InspectionIsLockedException;
 import com.dgladyshev.deadcodedetector.services.CodeAnalyzerService;
 import com.dgladyshev.deadcodedetector.services.InspectionsService;
 import com.dgladyshev.deadcodedetector.services.UrlCheckerService;
@@ -13,6 +14,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,6 +35,12 @@ import springfox.documentation.annotations.ApiIgnore;
 @RequestMapping("/api/v1/")
 public class DeadCodeController {
 
+    private static final String REPOSITORY_URL = "repositoryUrl";
+    private static final String BRANCH = "branch";
+    private static final String LANGUAGE = "language";
+    private static final String STRING_DATA_TYPE = "string";
+    private static final String QUERY_PARAM_TYPE = "query";
+
     private final CodeAnalyzerService codeAnalyzerService;
     private final InspectionsService inspectionsService;
     private final UrlCheckerService urlCheckerService;
@@ -48,29 +56,29 @@ public class DeadCodeController {
 
     @ApiImplicitParams({
             @ApiImplicitParam(
-                    name = "repositoryUrl",
+                    name = REPOSITORY_URL,
                     value = "Repository url",
                     required = true,
-                    dataType = "string",
-                    paramType = "query"),
+                    dataType = STRING_DATA_TYPE,
+                    paramType = QUERY_PARAM_TYPE),
             @ApiImplicitParam(
-                    name = "branch",
+                    name = BRANCH,
                     value = "Branch name",
                     required = false,
-                    dataType = "string",
-                    paramType = "query"),
+                    dataType = STRING_DATA_TYPE,
+                    paramType = QUERY_PARAM_TYPE),
             @ApiImplicitParam(
-                    name = "language",
+                    name = LANGUAGE,
                     value = "Language name",
                     required = true,
-                    dataType = "string",
-                    paramType = "query")
+                    dataType = STRING_DATA_TYPE,
+                    paramType = QUERY_PARAM_TYPE)
     })
     @PostMapping(value = "/inspections")
     public Mono<Inspection> addInspection(
-            @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo repo,
-            @ApiIgnore @Valid @ModelAttribute("language") Language language,
-            @ApiIgnore @Valid @ModelAttribute("branch") Branch branch) {
+            @ApiIgnore @Valid @ModelAttribute(REPOSITORY_URL) GitRepo repo,
+            @ApiIgnore @Valid @ModelAttribute(LANGUAGE) Language language,
+            @ApiIgnore @Valid @ModelAttribute(BRANCH) Branch branch) {
         urlCheckerService.checkAccessibility(repo.getUrl());
         return inspectionsService
                 .createInspection(
@@ -81,20 +89,38 @@ public class DeadCodeController {
                 .doOnSuccess(codeAnalyzerService::inspectCode);
     }
 
+    @ApiImplicitParams({
+            @ApiImplicitParam(
+                    name = REPOSITORY_URL,
+                    value = "Repository url",
+                    required = true,
+                    dataType = STRING_DATA_TYPE,
+                    paramType = QUERY_PARAM_TYPE),
+            @ApiImplicitParam(
+                    name = BRANCH,
+                    value = "Branch name",
+                    required = true,
+                    dataType = STRING_DATA_TYPE,
+                    paramType = QUERY_PARAM_TYPE)
+    })
     @PostMapping(value = "/inspections/refresh")
     public Mono<ResponseEntity<Void>> refreshInspection(
-            @ApiIgnore @Valid @ModelAttribute("repositoryUrl") GitRepo gitRepo,
-            @ApiIgnore @Valid @ModelAttribute("branch") Branch branch) {
+            @ApiIgnore @Valid @ModelAttribute(REPOSITORY_URL) GitRepo gitRepo,
+            @ApiIgnore @Valid @ModelAttribute(BRANCH) Branch branch) {
         return inspectionsService
-                .getRefreshableInspection(
+                .getInspection(
                         gitRepo,
                         branch.getName()
                 )
+                .filter(inspection -> {
+                    if (!inspection.isFinished()) {
+                        throw new InspectionIsLockedException();
+                    }
+                    return true;
+                })
                 .doOnSuccess(codeAnalyzerService::inspectCode)
-                //TODO throw exception which will result in code 404 instead
-                .then()
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.status(404).body(null));
+                .map(inspection -> new ResponseEntity<Void>(HttpStatus.OK))
+                .defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping(value = "/inspections")
@@ -116,14 +142,23 @@ public class DeadCodeController {
             @RequestParam(required = false) String filter) {
         return inspectionsService.getInspection(id)
                 .map(inspection -> inspection.toFilteredInspection(filter))
-                //TODO throw exception which will result in code 404 instead
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.status(404).body(null));
     }
 
     @DeleteMapping(value = "/inspections/{id}")
-    public Mono<Void> deleteInspectionById(@PathVariable String id) {
-        return inspectionsService.deleteInspection(id);
+    public Mono<ResponseEntity<Void>> deleteInspectionById(@PathVariable String id) {
+        return inspectionsService
+                .getInspection(id)
+                .filter(inspection -> {
+                    if (!inspection.isFinished()) {
+                        throw new InspectionIsLockedException();
+                    }
+                    return true;
+                })
+                .map(inspectionsService::deleteInspection)
+                .map(Void -> new ResponseEntity<Void>(HttpStatus.OK))
+                .defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
     }
 
 }

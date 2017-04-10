@@ -44,6 +44,10 @@ public class Inspection {
         this.branch = branch;
     }
 
+    public boolean isFinished() {
+        return state.equals(InspectionState.COMPLETED) || state.equals(InspectionState.FAILED);
+    }
+
     //returns filtered representation of inspection
     //warning: method creates new instance of inspection class
     public Inspection toFilteredInspection(String filter) {

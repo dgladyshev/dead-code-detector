@@ -83,7 +83,8 @@ public class DeadCodeControllerTest {
 
     @Test
     public void testDeleteInspectionById() throws Exception {
-        given(inspectionsService.deleteInspection(EXPECTED_ID)).willReturn(Mono.empty());
+        given(inspectionsService.getInspection(EXPECTED_ID)).willReturn(Mono.just(EXPECTED_INSPECTION));
+        given(inspectionsService.deleteInspection(EXPECTED_INSPECTION)).willReturn(Mono.empty());
 
         FluxExchangeResult<Void> result = client.delete().uri(API_V1_INSPECTIONS + "/" + EXPECTED_ID)
                 .accept(TEXT_EVENT_STREAM)
